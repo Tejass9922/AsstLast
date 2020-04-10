@@ -9,8 +9,13 @@
 #include <fcntl.h>
 #include <dirent.h> 
 
-int main(int argc, char* argv[]){
+void connectToServer(){
 
+
+}
+
+int main(int argc, char* argv[]){
+    connectToServer();
     return 0;
 
 }
