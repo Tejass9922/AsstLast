@@ -12,10 +12,14 @@
 void connectToServer(){
 
 
+<<<<<<< HEAD
 }
 
 int main(int argc, char* argv[]){
     connectToServer();
     return 0;
+=======
+    return 1;
+>>>>>>> eee152cd444f1840115890bcb46527fe703cfc9d
 
 }
