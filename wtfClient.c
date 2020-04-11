@@ -40,22 +40,33 @@ int main(int argc, char **argv)
    //while (recv_line(sockfd,buffer ) > 0)
    while (1)
    {
-	   
-    printf("File Name: ");
-    scanf("%s",buffer);
+            
+            printf("File Name: ");
+            scanf("%s",buffer);
 
-    if (send(sockfd,buffer,strlen(buffer),0) < 0)
-    {
-	   printf("Error \n");
-	   return 1;
-    }
-    if(recv(sockfd,server_reply,2000,0 ) < 0)
-    {
-	   puts("Error");
-	   break;
-    }
+            if (send(sockfd,buffer,strlen(buffer),0) < 0)
+            {
+            printf("Error \n");
+            return 1;
+            }
+            if(recv(sockfd,server_reply,2000,0 ) < 0)
+            {
+            puts("Error");
+            break;
+            }
+          int status;
+         int fd1 = atoi(server_reply);
+            char c;
+            do{
+        
+            status =  read(fd1, &c, 1); 
+            
+            if (status<=0){
+                break;
+            }
+            printf("%c",c); 
+    }while(status>0);
   
-   printf("Server Reply: %s \n",server_reply );
    
    }
 
