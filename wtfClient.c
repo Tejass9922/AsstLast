@@ -8,11 +8,39 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <string.h>
+#include <ctype.h>
 #include <unistd.h>
+#include <dirent.h> 
+#include <sys/stat.h>
 
 
+void configure(char* host, char* port){
+
+    char configureS [50] = "server.configure";
+  int fd =  open(configureS,O_RDWR);
+    if (fd!=-1){
+        printf("*Overwriting Configure File**\n");
+    }
+    fd =open(configureS,O_RDWR|O_CREAT|O_TRUNC, S_IRUSR | S_IWUSR);
+    write(fd,host,strlen(host));
+    char sp = ' ';
+    write(fd,&sp,1);
+    write(fd,port, strlen(port));
+
+
+}
 int main(int argc, char **argv)
 {
+ char* host ;
+   char* port1;
+   int port;
+if (strcmp(argv[1],"configure")==0){
+      host = argv[2];
+     port1= argv[3];
+     configure(host,port1);
+}
+
+   else{ 
     int sockfd;
     char buffer[1000];
     char server_reply[2000];
@@ -30,7 +58,8 @@ int main(int argc, char **argv)
 	printf("Created Socket \n");
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
-   servaddr.sin_port = htons(6000);
+
+   servaddr.sin_port = htons(port);
    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
    //inet_pton(AF_INET, argv[1],&servaddr.sin_addr);
    
@@ -60,5 +89,6 @@ int main(int argc, char **argv)
    }
 
     close(sockfd);
+   }
 	return 0;
 }
