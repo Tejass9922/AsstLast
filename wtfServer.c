@@ -9,7 +9,7 @@
 
 void *server_handler (void *fd_pointer);
 
-int main()
+int main(int argc, char **argv)
 {
 
     int listenfd, connfd, *new_sock;
@@ -27,7 +27,8 @@ int main()
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
    servaddr.sin_addr.s_addr = INADDR_ANY;
-   servaddr.sin_port = htons(8888);
+   int port = atoi(argv[1]);
+   servaddr.sin_port = htons(port);
    
    if (bind(listenfd,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
    {
