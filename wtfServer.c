@@ -26,7 +26,7 @@ int main(int argc, char **argv)
   
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
-   servaddr.sin_addr.s_addr = INADDR_ANY;
+   servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
    int port = atoi(argv[1]);
    servaddr.sin_port = htons(port);
    
