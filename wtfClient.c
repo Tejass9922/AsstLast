@@ -80,11 +80,9 @@ if (strcmp(argv[1],"configure")==0){
 	   puts("Error");
 	   break;
     }
-   //puts("Server Reply ");
-   //puts(server_reply);
+  
    printf("Server Reply: %s \n",server_reply );
-   //bzero(&server_reply, sizeof(server_reply));
-   //memset(&server_reply,0,sizeof(server_reply));
+   
    }
 
     close(sockfd);
