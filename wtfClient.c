@@ -20,8 +20,8 @@ int main(int argc, char **argv)
 	printf("Created Socket \n");
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
-   int port = atoi(argv[1]);
-   servaddr.sin_port = htons(port);
+   //int port = atoi(argv[1]);
+   servaddr.sin_port = htons(8888);
    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
    //inet_pton(AF_INET, argv[1],&servaddr.sin_addr);
    
