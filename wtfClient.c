@@ -69,6 +69,8 @@ int main(int argc, char **argv)
             printf("%c",c); 
     }while(status>0);*/
    
+             printf("Server Reply: %s \n",server_reply );
+          
   
    
    }
