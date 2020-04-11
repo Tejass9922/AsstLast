@@ -1,8 +1,14 @@
-#include<stdio.h> //printf
-#include<string.h>    //strlen
-#include<sys/socket.h>    //socket
-#include<arpa/inet.h> //inet_addr
- 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <string.h>
+#include <unistd.h>
 
 
 int main(int argc, char **argv)
@@ -24,8 +30,12 @@ int main(int argc, char **argv)
 	printf("Created Socket \n");
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
+<<<<<<< HEAD
    int port = atoi(argv[1]);
    servaddr.sin_port = htons(6010);
+=======
+   servaddr.sin_port = htons(6000);
+>>>>>>> b51c96b02096862d1f17ad96ffdd33f2b2c0e571
    servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
    //inet_pton(AF_INET, argv[1],&servaddr.sin_addr);
    
