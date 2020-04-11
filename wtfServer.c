@@ -5,6 +5,8 @@
 #include<arpa/inet.h> //inet_addr
 #include<unistd.h>    //write
 #include<pthread.h> //for threading , link with lpthread
+#include <fcntl.h>
+#include <dirent.h>
 
 
 void *server_handler (void *fd_pointer);
@@ -83,8 +85,14 @@ void *server_handler (void *fd_pointer)
 
     while((read_size = recv(sock,client_message,2000,0)) > 0)
    {
+     
      printf("Read Size %d \n", read_size);
-     write(sock,client_message,strlen(client_message));
+
+     int file = open(client_message, O_RDONLY, 777);
+     printf("File Descriptor: %d\n", file);
+     char c = file + '0';
+
+     write(sock, &c, 1);
    }
     if(read_size == 0)
     {
