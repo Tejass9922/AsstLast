@@ -54,18 +54,8 @@ int main(int argc, char **argv)
             puts("Error");
             break;
             }
-          int status;
-         int fd1 = atoi(server_reply);
-            char c;
-            do{
-        
-            status =  read(fd1, &c, 1); 
-            
-            if (status<=0){
-                break;
-            }
-            printf("%c",c); 
-    }while(status>0);
+             printf("Server Reply: %s \n",server_reply );
+          
   
    
    }

@@ -72,10 +72,11 @@ void *server_handler (void *fd_pointer)
     int read_size, write_size;
     char *message;
 	static char client_message[2000];
+    static char fileContents[2000];
     message = " \nHello Server Handler \n";
 	//message2 = "Test Send \n";
-
-
+    int status;
+    char c[1];
 	static int send_once = 0;
 	if (send_once < 1)
 	{
@@ -89,10 +90,30 @@ void *server_handler (void *fd_pointer)
      printf("Read Size %d \n", read_size);
 
      int file = open(client_message, O_RDONLY, 777);
+     int count = 0;
+     do{
+        
+        status =  read(file, &c, 1);     
+        if (status <=0 ){
+            //printf("STAT CHECK\n");
+            break;
+        }
+        else
+        {
+            fileContents[count] = c[0];
+            count++;
+            printf("%c",c[0]); 
+        }
+            
+        //printf("%c",c[0]); 
+    }while(status>0);
+     printf("\n");
      printf("File Descriptor: %d\n", file);
+     close(file);
      char c = file + '0';
 
-     write(sock, &c, 1);
+     write(sock,fileContents,strlen(fileContents));
+     //write(sock, &c, 1);
    }
     if(read_size == 0)
     {
