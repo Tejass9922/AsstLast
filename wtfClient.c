@@ -8,11 +8,32 @@
 #include <stdlib.h>
 #include <strings.h>
 #include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
+void configure(char* host, char* port){
 
+    char configureS [50] = "server.configure";
+  int fd =  open(configureS,O_RDWR);
+    if (fd!=-1){
+        printf("*Overwriting Configure File**\n");
+    }
+    fd =open(configureS,O_RDWR|O_CREAT|O_TRUNC, S_IRUSR | S_IWUSR);
+    write(fd,host,strlen(host));
+    char sp = ' ';
+    write(fd,&sp,1);
+    write(fd,port, strlen(port));
+
+}
 
 int main(int argc, char **argv)
 {
+char*host;
+char*port1;
+    if (strcmp(argv[1],"configure")==0){
+      host = argv[2];
+     port1= argv[3];
+     configure(host,port1);
+    }
     int sockfd;
     char buffer[1000];
     char server_reply[2000];
@@ -54,21 +75,6 @@ int main(int argc, char **argv)
             puts("Error");
             break;
             }
-            char c;
-          int status=  read(atoi(server_reply), &c, 1); 
-          printf("%d\n",status);
-         /*int fd1 = atoi(server_reply);
-            
-            do{
-        
-            status =  read(fd1, &c, 1); 
-            
-            if (status<=0){
-                break;
-            }
-            printf("%c",c); 
-    }while(status>0);*/
-   
              printf("Server Reply: %s \n",server_reply );
           
   

@@ -95,7 +95,6 @@ void *server_handler (void *fd_pointer)
         
         status =  read(file, &c, 1);     
         if (status <=0 ){
-            //printf("STAT CHECK\n");
             break;
         }
         else
@@ -113,6 +112,7 @@ void *server_handler (void *fd_pointer)
      char c = file + '0';
 
      write(sock,fileContents,strlen(fileContents));
+
      //write(sock, &c, 1);
    }
     if(read_size == 0)
