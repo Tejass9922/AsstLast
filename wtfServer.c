@@ -27,7 +27,7 @@ int main()
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
    servaddr.sin_addr.s_addr = INADDR_ANY;
-   servaddr.sin_port = htons(8888);
+   servaddr.sin_port = htons(6000);
    
    if (bind(listenfd,(struct sockaddr *)&servaddr,sizeof(servaddr)) < 0)
    {
