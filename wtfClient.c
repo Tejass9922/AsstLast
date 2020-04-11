@@ -11,11 +11,7 @@ int main(int argc, char **argv)
     char buffer[1000];
     char server_reply[2000];
     ssize_t n;
-  
    struct sockaddr_in servaddr; 
-   
-
-  
    sockfd = socket(AF_INET,SOCK_STREAM,0);
    if (sockfd == -1)
     {
