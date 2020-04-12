@@ -50,12 +50,23 @@ void setTimeout(int milliseconds)
 
 void add(char*projectName, char*fileName){
 //find filePath
-connectToServer(fileName);
+//connectToServer(fileName);
 //try to make the connection variables ussed global so we can call them here
 
 }
 
+int getConfigureDetails(){
 
+    int fd = open("server.configure",O_RDONLY);
+    if (fd==-1){
+        return 1;
+    }
+    else{
+      //do while
+    }
+    
+    
+}
 void configure(char* host, char* port){
 
     char configureS [50] = "server.configure";
@@ -68,9 +79,6 @@ void configure(char* host, char* port){
     char sp = ' ';
     write(fd,&sp,1);
     write(fd,port, strlen(port));
-    info.IP = (char*)(malloc(strlen(host)+1));
-    strcpy(info.IP,host);
-    info.portNumber = atoi(port);
 
 }
 
@@ -256,89 +264,11 @@ char*port1;
             flagCounter++;
            compressC = true;
         }
-        if (!(strcmp("configure",argv[1])==0))
-            connectToServer(argv[1]);
+        if (strcmp(argv[1],"getFiles")==0){
+           int sockfd = connectToServer(argv[2], argv[3]);
+           getFiles(sockfd, argv[3]);
+        }
+
+       
         return 0;
 }
-    
-  
-   sockfd = socket(AF_INET,SOCK_STREAM,0);
-   if (sockfd == -1)
-    {
-        perror("Could not create socket");
-    }
-	printf("Created Socket \n");
-   bzero(&servaddr,sizeof (servaddr));
-   servaddr.sin_family = AF_INET;
-   int port = info.portNumber;
-   servaddr.sin_port = htons(port);
-   servaddr.sin_addr.s_addr = inet_addr(info.IP);
-  int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
-   while (cx==-1){
-      printf("trying to reconnect\n");
-      setTimeout(3000);
-      cx = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
-   }
-      
-            printf("File Name: %s\n",fileName);
-            int status;
-            char c;
-            int fd = open(fileName,O_RDWR);
-
-    do{
-   
-        status =  read(fd, &c, 1); 
-        
-        if (status<=0){
-            break;
-        }
-        if (c=='\n'){
-                if (send(sockfd,buffer,strlen(buffer),0) < 0)
-                {
-                printf("Error \n");
-                return ;
-                }
-                if(recv(sockfd,server_reply,2000,0 ) < 0)
-                {
-                puts("Error");
-                }
-                printf("%s\n",server_reply);
-            buffer = malloc(sizeof(char) *1);
-        }
-
-        else{
-        
-            int len = strlen(buffer);
-            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-            buffer[len] = c;
-            buffer[len+1] = '\0';    
-        
-        }
-    }while(status>0);
-        if (buffer[0]!='\0'){
-            if (send(sockfd,buffer,strlen(buffer),0) < 0)
-                {
-                printf("Error \n");
-                return ;
-                }
-                if(recv(sockfd,server_reply,2000,0 ) < 0)
-                {
-                puts("Error");
-                }
-                printf("%s\n",server_reply);
-        } 
-
-    close(sockfd);
-      }
-      else
-      {
-          printf("**Cannot find a.Configure file to use to connect to server!**\n");
-      }
-      
-  }
-
-
-
-
-    
-  

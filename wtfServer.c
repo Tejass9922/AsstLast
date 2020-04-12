@@ -37,13 +37,11 @@ while((read_size = recv(sock,client_message,2000,0)) > 0)
         {
             fileContents[count] = c[0];
             count++;
-            //printf("%c",c[0]); 
         }
             
-        //printf("%c",c[0]); 
+     
     }while(status>0);
-     //printf("\n");
-     //printf("File Descriptor: %d\n", file);
+     
      close(file);
      char c = file + '0';
 
