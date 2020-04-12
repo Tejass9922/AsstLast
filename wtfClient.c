@@ -181,9 +181,8 @@ int getFiles(int sockfd, char* fileName)
         //close(sockfd);
 }
 
-int connectToServer(char* portNumber, char* fileName){
-    
-      char cfp [100] = "server.configure";
+int connectToServer(){
+     getConfigureDetails();
       if (getConfigureDetails()!=-1){ 
         int sockfd;
         char* buffer = malloc(sizeof(char) *1);
@@ -202,9 +201,8 @@ int connectToServer(char* portNumber, char* fileName){
         servaddr.sin_family = AF_INET;
         int port1 = (info.portNumber);
         //printf("portNumber: %d\n", port1);
-        int port = atoi(portNumber);
-        servaddr.sin_port = htons(port);
-        servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        servaddr.sin_port = htons(port1);
+        servaddr.sin_addr.s_addr = inet_addr(info.IP);
         int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
         while (cx==-1){
         printf("trying to reconnect\n");
@@ -241,13 +239,14 @@ int main(int argc, char **argv)
         }
        
         if (strcmp(argv[1],"getFiles")==0){
-           int sockfd = connectToServer(argv[2], argv[3]);
+            
+           int sockfd = connectToServer(argv[1], argv[2]);
            char* getFile = "getFiles";
            write(sockfd, getFile, strlen(getFile) + 1);
-           getFiles(sockfd, argv[3]);
+           getFiles(sockfd, argv[2]);
            close(sockfd);
         }
 
-        getConfigureDetails();
+       
         return 0;
 }
