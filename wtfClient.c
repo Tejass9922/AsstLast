@@ -70,7 +70,7 @@ void configure(char* host, char* port){
 
 int getFiles(int sockfd, char* fileName)
 {
-       char server_reply[2000];
+       char* server_reply = malloc(sizeof(char) * 2000);
        char* buffer = malloc(sizeof(char) *1);
        printf("File Name: %s\n",fileName);
         int status;
@@ -108,6 +108,7 @@ int getFiles(int sockfd, char* fileName)
                 puts("Error");
                 }
                 printf("%s\n",server_reply);
+                server_reply = malloc(sizeof(char) *2000);
                 buffer = malloc(sizeof(char) *1);
             }
 
@@ -131,7 +132,9 @@ int getFiles(int sockfd, char* fileName)
                 puts("Error");
                 }
                 printf("%s\n",server_reply);
+                server_reply = malloc(sizeof(char) *2000);
         } 
+        close(fd);
 
         close(sockfd);
 }

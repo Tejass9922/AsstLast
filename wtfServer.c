@@ -12,9 +12,10 @@ int returnFiles(int sock)
 {
     int read_size, write_size;
     char *message;
-	static char client_message[2000];
+	char* client_message = malloc(sizeof(char) * 2000);
     static char command[1000];
-    static char fileContents[2000];
+    char* fileContents = malloc(sizeof(char) * 2000);
+    
     message = " \nHello Server Handler \n";
     int status;
     char c[1];
@@ -47,6 +48,8 @@ while((read_size = recv(sock,client_message,2000,0)) > 0)
      char c = file + '0';
 
      write(sock,fileContents,strlen(fileContents));
+     client_message = malloc( sizeof(char) * 2000);
+     fileContents = malloc( sizeof(char) * 2000);
 
      //write(sock, &c, 1);
    } 
