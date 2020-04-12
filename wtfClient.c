@@ -20,13 +20,12 @@ typedef struct File{
 }File;
 
 typedef struct ConfigureInfo{
-
     char*IP;
     int portNumber;
 }ConfigureInfo;
 
 ConfigureInfo info;
-
+void connectToServer(char* fileName);
 
 void setTimeout(int milliseconds)
 {
@@ -48,7 +47,9 @@ connectToServer(fileName);
 //try to make the connection variables ussed global so we can call them here
 
 }
-
+void removeProjFile(char*projectName, char*fileName){
+    
+}
 
 void configure(char* host, char* port){
 
@@ -134,7 +135,8 @@ char*port1;
             flagCounter++;
            compressC = true;
         }
-        connectToServer(argv[2]);
+        if (!(strcmp("configure",argv[1])==0))
+            connectToServer(argv[1]);
         return 0;
 }
     
@@ -161,7 +163,7 @@ char*port1;
 	printf("Created Socket \n");
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
-   int port = atoi(info.portNumber);
+   int port = info.portNumber;
    servaddr.sin_port = htons(port);
    servaddr.sin_addr.s_addr = inet_addr(info.IP);
   int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
@@ -187,7 +189,7 @@ char*port1;
                 if (send(sockfd,buffer,strlen(buffer),0) < 0)
                 {
                 printf("Error \n");
-                return 1;
+                return ;
                 }
                 if(recv(sockfd,server_reply,2000,0 ) < 0)
                 {
@@ -210,7 +212,7 @@ char*port1;
             if (send(sockfd,buffer,strlen(buffer),0) < 0)
                 {
                 printf("Error \n");
-                return 1;
+                return ;
                 }
                 if(recv(sockfd,server_reply,2000,0 ) < 0)
                 {
