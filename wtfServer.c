@@ -20,12 +20,16 @@ int returnFiles(int sock)
     int status;
     char c[1];
 
-while((read_size = recv(sock,client_message,2000,0)) > 0)
-   {
+    //recv(sock,client_message,2000,0))
+
+do{
+   
      
-     //printf("Read Size %d \n", read_size);
+     printf("loop check\n");
 
      int file = open(client_message, O_RDONLY, 777);
+     printf("filename: %s fd: %d\n", client_message, file);
+
      int count = 0;
      do{
         
@@ -50,7 +54,7 @@ while((read_size = recv(sock,client_message,2000,0)) > 0)
      fileContents = malloc( sizeof(char) * 2000);
 
      //write(sock, &c, 1);
-   } 
+   }while((read_size = recv(sock,client_message,2000,0)) > 0);
 }
 
 
@@ -120,7 +124,7 @@ void *server_handler (void *fd_pointer)
 	//write(sock,message,strlen(message));
 	send_once++;
 	}
-    static char command[100];
+    char* command = malloc(100 * sizeof(char));
 
     /*
     if (recv(sock,command,2000,0) > 0)
@@ -134,11 +138,16 @@ void *server_handler (void *fd_pointer)
     }
     */
 
-    //read(sock, command, 100);
-    //printf("recieved: %s\n", command);
+    read(sock, command, 100);
+    printf("recieved: %s\n", command);
+    if (strcmp(command, "getFiles") == 0)
+    {
+        printf("got Command\n");
+        returnFiles(sock);
+    }
+    command = malloc (100 * sizeof(char));
     
     
-    returnFiles(sock);
     
 
     /*

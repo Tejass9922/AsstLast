@@ -90,30 +90,25 @@ int getFiles(int sockfd, char* fileName)
         int status;
         char c;
         int fd = open(fileName,O_RDWR);
+        printf("fileDescriptor: %d\n", fd);
 
-        char* command = "getFiles\0";
-
-        
-        /*
-        if (send(sockfd,command,strlen(command),0) < 0)
-        {
-            printf("did not send\n");
-        }
-        */
-
-        //write(sockfd, command, strlen(command));
-
+        printf("test\n");
 
         do{
    
             status =  read(fd, &c, 1); 
+
+            //printf("loop Check: %c\n", c);
         
             if (status<=0){
+                //printf("status Check: %d\n", status);
                 break;
             }
             if (c=='\n'){
+                printf("buffer: %s\n", buffer);
                 if (send(sockfd,buffer,strlen(buffer),0) < 0)
                 {
+            
                 printf("Error \n");
                 return 1;
                 }
@@ -150,7 +145,7 @@ int getFiles(int sockfd, char* fileName)
         } 
         close(fd);
 
-        close(sockfd);
+        //close(sockfd);
 }
 
 int connectToServer(char* portNumber, char* fileName){
@@ -173,7 +168,7 @@ int connectToServer(char* portNumber, char* fileName){
         bzero(&servaddr,sizeof (servaddr));
         servaddr.sin_family = AF_INET;
         int port1 = (info.portNumber);
-        printf("portNumber: %d\n", port1);
+        //printf("portNumber: %d\n", port1);
         int port = atoi(portNumber);
         servaddr.sin_port = htons(port);
         servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
@@ -266,7 +261,10 @@ char*port1;
         }
         if (strcmp(argv[1],"getFiles")==0){
            int sockfd = connectToServer(argv[2], argv[3]);
+           char* getFile = "getFiles";
+           write(sockfd, getFile, strlen(getFile) + 1);
            getFiles(sockfd, argv[3]);
+           close(sockfd);
         }
 
        
