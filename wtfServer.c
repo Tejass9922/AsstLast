@@ -20,12 +20,16 @@ int returnFiles(int sock)
     int status;
     char c[1];
 
-while((read_size = recv(sock,client_message,2000,0)) > 0)
-   {
+    //recv(sock,client_message,2000,0))
+
+do{
+   
      
-     //printf("Read Size %d \n", read_size);
+     printf("loop check\n");
 
      int file = open(client_message, O_RDONLY, 777);
+     printf("filename: %s fd: %d\n", client_message, file);
+
      int count = 0;
      do{
         
@@ -52,7 +56,7 @@ while((read_size = recv(sock,client_message,2000,0)) > 0)
      fileContents = malloc( sizeof(char) * 2000);
 
      //write(sock, &c, 1);
-   } 
+   }while((read_size = recv(sock,client_message,2000,0)) > 0);
 }
 
 
