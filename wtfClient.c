@@ -13,11 +13,17 @@
 #include <unistd.h>
 #include<time.h>
 
-typedef struct File{
+struct File{
     int version;
-    char*filePath;
-    char*hash;
-}File;
+    char* filePath;
+    char* hash;
+    struct File* next;
+};
+
+struct Manifest{
+    int ProjectVersion;
+    struct File fileHead; 
+};
 
 typedef struct ConfigureInfo{
 
