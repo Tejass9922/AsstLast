@@ -57,15 +57,48 @@ void add(char*projectName, char*fileName){
 
 int getConfigureDetails(){
 
-    int fd = open("server.configure",O_RDONLY);
+    char name[17] = "server.configure"; 
+    int fd = open(name,O_RDONLY);
+    
     if (fd==-1){
-        return 1;
+        
+        return -1;
     }
+  
     else{
-      //do while
+        
+       
+        int status;
+        char c;
+        char*buffer = (char*)malloc(sizeof(char)*1);
+        int i = 0;
+        do{
+            status = read(fd,&c,1);
+            if (status<=0)
+                break;
+            if (c==' ')
+            { 
+                if (i==0){
+                    info.IP = (char*)malloc( strlen(buffer)+1 );
+                    strcpy(info.IP,buffer);
+                   
+                }
+                i++;
+                 buffer = (char*)(malloc(sizeof(char)*1));
+                
+            }
+            else
+            {
+                int len = strlen(buffer);
+                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                buffer[len] = c;
+                buffer[len+1] = '\0'; 
+            }
+        }while(status>0);
+       info.portNumber = atoi(buffer);
     }
     
-    
+    return 0;
 }
 void configure(char* host, char* port){
 
@@ -92,7 +125,7 @@ int getFiles(int sockfd, char* fileName)
         int fd = open(fileName,O_RDWR);
         printf("fileDescriptor: %d\n", fd);
 
-        printf("test\n");
+     
 
         do{
    
@@ -149,9 +182,9 @@ int getFiles(int sockfd, char* fileName)
 }
 
 int connectToServer(char* portNumber, char* fileName){
+    
       char cfp [100] = "server.configure";
-      int configureFD = open(cfp,O_RDWR);
-      if (configureFD!=-1){ 
+      if (getConfigureDetails()!=-1){ 
         int sockfd;
         char* buffer = malloc(sizeof(char) *1);
         char server_reply[2000];
@@ -191,74 +224,22 @@ int connectToServer(char* portNumber, char* fileName){
 
     
     return 0;  
-  }
+}
 
 int main(int argc, char **argv)
 {
-char*host;
-char*port1;
+    char*host;
+    char*port1;
    
 
-     bool recur = false;
-    bool compressC = false;
-    bool decompressC = false;
-    bool buildCode = false;
-    int flagCounter = 0;
-    int i;
    
+    
         if (strcmp(argv[1],"configure")==0){
          host = argv[2];
          port1= argv[3];
          configure(host,port1);
         }
-        if (strcmp(argv[1],"add")==0){
-            flagCounter++;
-            buildCode = true;
-        }
-        if (strcmp(argv[1],"destroy")==0){
-            flagCounter++;
-            decompressC = true;
-        }
-        if (strcmp(argv[1],"create")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"update")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"upgrade")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"commit")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"push")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"remove")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"currentversion")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"history")==0){
-            flagCounter++;
-           compressC = true;
-        }
-        if (strcmp(argv[1],"rollback")==0){
-            flagCounter++;
-           compressC = true;
-        }
-         if (strcmp(argv[1],"checkout")==0){
-            flagCounter++;
-           compressC = true;
-        }
+       
         if (strcmp(argv[1],"getFiles")==0){
            int sockfd = connectToServer(argv[2], argv[3]);
            char* getFile = "getFiles";
@@ -267,6 +248,6 @@ char*port1;
            close(sockfd);
         }
 
-       
+        getConfigureDetails();
         return 0;
 }

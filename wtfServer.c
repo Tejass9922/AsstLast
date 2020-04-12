@@ -17,15 +17,16 @@ int returnFiles(int sock)
     char* fileContents = malloc(sizeof(char) * 2000);
     
     message = " \nHello Server Handler \n";
-    int status;
+    int status = 0;
     char c[1];
 
     //recv(sock,client_message,2000,0))
-
-do{
+int mStatus = read(sock,client_message,strlen(client_message)+1);
+printf("Hello: %d\n",strlen(client_message));
+while(mStatus>0){
    
      
-     printf("loop check\n");
+     printf("%s\n",client_message);
 
      int file = open(client_message, O_RDONLY, 777);
      printf("filename: %s fd: %d\n", client_message, file);
@@ -49,12 +50,12 @@ do{
      close(file);
      char c = file + '0';
 
-     write(sock,fileContents,strlen(fileContents));
+     //write(sock,fileContents,strlen(fileContents));
      client_message = malloc( sizeof(char) * 2000);
      fileContents = malloc( sizeof(char) * 2000);
 
      //write(sock, &c, 1);
-   }while((read_size = recv(sock,client_message,2000,0)) > 0);
+   }
 }
 
 
