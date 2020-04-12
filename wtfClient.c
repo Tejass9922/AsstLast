@@ -87,6 +87,8 @@ int getFiles(int sockfd, char* fileName)
         }
         */
 
+        //write(sockfd, command, strlen(command));
+
 
         do{
    

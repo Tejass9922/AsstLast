@@ -119,7 +119,7 @@ void *server_handler (void *fd_pointer)
 	//write(sock,message,strlen(message));
 	send_once++;
 	}
-    static char command[2000];
+    static char command[100];
 
     /*
     if (recv(sock,command,2000,0) > 0)
@@ -132,8 +132,11 @@ void *server_handler (void *fd_pointer)
         printf("Rec: %s\n", command);
     }
     */
-    
 
+    //read(sock, command, 100);
+    //printf("recieved: %s\n", command);
+    
+    
     returnFiles(sock);
     
 
