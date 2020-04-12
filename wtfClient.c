@@ -13,11 +13,17 @@
 #include <unistd.h>
 #include<time.h>
 
-typedef struct File{
+struct File{
     int version;
-    char*filePath;
-    char*hash;
-}File;
+    char* filePath;
+    char* hash;
+    struct File* next;
+};
+
+struct Manifest{
+    int ProjectVersion;
+    struct File fileHead; 
+};
 
 typedef struct ConfigureInfo{
     char*IP;
@@ -68,6 +74,122 @@ void configure(char* host, char* port){
     info.portNumber = atoi(port);
 
 }
+
+int getFiles(int sockfd, char* fileName)
+{
+       char* server_reply = malloc(sizeof(char) * 2000);
+       char* buffer = malloc(sizeof(char) *1);
+       printf("File Name: %s\n",fileName);
+        int status;
+        char c;
+        int fd = open(fileName,O_RDWR);
+
+        char* command = "getFiles\0";
+
+        
+        /*
+        if (send(sockfd,command,strlen(command),0) < 0)
+        {
+            printf("did not send\n");
+        }
+        */
+
+        //write(sockfd, command, strlen(command));
+
+
+        do{
+   
+            status =  read(fd, &c, 1); 
+        
+            if (status<=0){
+                break;
+            }
+            if (c=='\n'){
+                if (send(sockfd,buffer,strlen(buffer),0) < 0)
+                {
+                printf("Error \n");
+                return 1;
+                }
+                if(recv(sockfd,server_reply,2000,0 ) < 0)
+                {
+                puts("Error");
+                }
+                printf("%s\n",server_reply);
+                server_reply = malloc(sizeof(char) *2000);
+                buffer = malloc(sizeof(char) *1);
+            }
+
+            else{
+        
+                int len = strlen(buffer);
+                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                buffer[len] = c;
+                buffer[len+1] = '\0';    
+        
+            }
+        }while(status>0);
+        if (buffer[0]!='\0'){
+            if (send(sockfd,buffer,strlen(buffer),0) < 0)
+                {
+                printf("Error \n");
+                return 1;
+                }
+                if(recv(sockfd,server_reply,2000,0 ) < 0)
+                {
+                puts("Error");
+                }
+                printf("%s\n",server_reply);
+                server_reply = malloc(sizeof(char) *2000);
+        } 
+        close(fd);
+
+        close(sockfd);
+}
+
+int connectToServer(char* portNumber, char* fileName){
+      char cfp [100] = "server.configure";
+      int configureFD = open(cfp,O_RDWR);
+      if (configureFD!=-1){ 
+        int sockfd;
+        char* buffer = malloc(sizeof(char) *1);
+        char server_reply[2000];
+        ssize_t n;
+  
+        struct sockaddr_in servaddr; 
+
+        sockfd = socket(AF_INET,SOCK_STREAM,0);
+        if (sockfd == -1)
+        {
+            perror("Could not create socket");
+        }
+	    printf("Created Socket \n");
+        bzero(&servaddr,sizeof (servaddr));
+        servaddr.sin_family = AF_INET;
+        int port1 = (info.portNumber);
+        printf("portNumber: %d\n", port1);
+        int port = atoi(portNumber);
+        servaddr.sin_port = htons(port);
+        servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+        int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
+        while (cx==-1){
+        printf("trying to reconnect\n");
+        setTimeout(3000);
+        cx = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
+        }
+
+        return sockfd;
+      
+         
+    }
+    
+    else
+    {
+          printf("**Cannot find a.Configure file to use to connect to server!**\n");
+    }
+
+    
+    return 0;  
+  }
 
 int main(int argc, char **argv)
 {
@@ -140,20 +262,6 @@ char*port1;
         return 0;
 }
     
-  void connectToServer(char* fileName){
-      char cfp [100] = "server.configure";
-      int configureFD = open(cfp,O_RDWR);
-      if (configureFD!=-1){
-
-         
-    int sockfd;
-   char* buffer = malloc(sizeof(char) *1);
-    char server_reply[2000];
-    ssize_t n;
-  
-   struct sockaddr_in servaddr; 
-   
-
   
    sockfd = socket(AF_INET,SOCK_STREAM,0);
    if (sockfd == -1)
