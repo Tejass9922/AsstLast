@@ -50,7 +50,7 @@ void setTimeout(int milliseconds)
 
 void add(char*projectName, char*fileName){
 //find filePath
-connectToServer(fileName);
+//connectToServer(fileName);
 //try to make the connection variables ussed global so we can call them here
 
 }
@@ -84,17 +84,6 @@ int getFiles(int sockfd, char* fileName)
         int fd = open(fileName,O_RDWR);
 
         char* command = "getFiles\0";
-
-        
-        /*
-        if (send(sockfd,command,strlen(command),0) < 0)
-        {
-            printf("did not send\n");
-        }
-        */
-
-        //write(sockfd, command, strlen(command));
-
 
         do{
    
@@ -258,6 +247,7 @@ char*port1;
         }
         if (strcmp(argv[1],"getFiles")==0){
            int sockfd = connectToServer(argv[2], argv[3]);
+           write(sockfd, "getFiles", 8);
            getFiles(sockfd, argv[3]);
         }
 

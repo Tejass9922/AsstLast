@@ -122,7 +122,7 @@ void *server_handler (void *fd_pointer)
 	//write(sock,message,strlen(message));
 	send_once++;
 	}
-    static char command[100];
+    char* command = malloc(100 * sizeof(char));
 
     /*
     if (recv(sock,command,2000,0) > 0)
@@ -136,11 +136,16 @@ void *server_handler (void *fd_pointer)
     }
     */
 
-    //read(sock, command, 100);
-    //printf("recieved: %s\n", command);
+    read(sock, command, 100);
+    printf("recieved: %s\n", command);
+    if (strcmp(command, "getFiles") == 0)
+    {
+        printf("got Command\n");
+        returnFiles(sock);
+    }
+    command = malloc (100 * sizeof(char));
     
     
-    returnFiles(sock);
     
 
     /*
