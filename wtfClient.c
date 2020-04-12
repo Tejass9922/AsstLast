@@ -26,12 +26,13 @@ struct Manifest{
 };
 
 typedef struct ConfigureInfo{
+
     char*IP;
     int portNumber;
 }ConfigureInfo;
 
 ConfigureInfo info;
-void connectToServer(char* fileName);
+
 
 void setTimeout(int milliseconds)
 {
@@ -53,9 +54,7 @@ connectToServer(fileName);
 //try to make the connection variables ussed global so we can call them here
 
 }
-void removeProjFile(char*projectName, char*fileName){
-    
-}
+
 
 void configure(char* host, char* port){
 
