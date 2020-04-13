@@ -59,19 +59,28 @@ int returnFiles(int sock)
 }
 
 void createProject(int sock){
+
+
     char*projectName = (char*)(malloc(sizeof(char)*100));
     read(sock, projectName, 100);
     printf("recieved project name: %s",projectName);
-    int check = mkdir(projectName,0777);
-    char*filePath = (char*)(malloc(sizeof(char)*100));
-    strcpy(filePath,projectName);
-    strcat(filePath,"/");
-    strcat(filePath,projectName);
-    strcat(filePath,".Manifest");
-    printf("file Path: %s\n",filePath);
-    int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
-     printf("fD %d\n",filedescriptor);
-
+    DIR *dr = opendir(projectName); 
+    if (dr == NULL)  
+    { 
+        int check = mkdir(projectName,0777);
+        char*filePath = (char*)(malloc(sizeof(char)*100));
+        strcpy(filePath,projectName);
+        strcat(filePath,"/");
+        strcat(filePath,projectName);
+        strcat(filePath,".Manifest");
+        printf("file Path: %s\n",filePath);
+        int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
+        printf("fD %d\n",filedescriptor);
+            
+    } 
+        else{
+            printf("\n**Project already Exists**\n");
+        }
     //Now that we made a physical copy of a directory with the given project name on the server with a manifest
     //we are supposed to send that over to the client. How do we send it over? In what format?
 }
