@@ -60,7 +60,7 @@ int returnFiles(int sock)
 
 void createProject(int sock){
 
-
+//test to see if push works
     char*projectName = (char*)(malloc(sizeof(char)*100));
     read(sock, projectName, 100);
     printf("recieved project name: %s",projectName);
