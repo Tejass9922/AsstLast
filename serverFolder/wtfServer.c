@@ -7,6 +7,23 @@
 #include<pthread.h> //for threading , link with lpthread
 #include <fcntl.h>
 #include <dirent.h>
+#include <dirent.h>
+
+
+int createDIR(int sock)
+{
+    int read_size, write_size;
+    char *message;
+	char* client_message = malloc(sizeof(char) * 2000);
+    static char command[1000];
+
+    printf("socketCheck: %d\n", sock);
+    int readTemp = recv(sock,client_message,2000,0);
+    int check; 
+  
+    check = mkdir(client_message); 
+    printf("readSize: %d  message: %s\n", readTemp, client_message);
+}
 
 int returnFiles(int sock)
 {
@@ -127,26 +144,19 @@ void *server_handler (void *fd_pointer)
 	}
     char* command = malloc(100 * sizeof(char));
 
-    /*
-    if (recv(sock,command,2000,0) > 0)
-    {
-        printf("Recieved\n");
-    }
 
-    if (strcmp(command, "getFiles\0") != 0)
-    {
-        printf("Rec: %s\n", command);
-    }
-    */
-
-
-    read(sock, command, 100);
-    //recv(sock,command,2000,0);
+    //read(sock, command, 100);
+    recv(sock,command,2000,0);
     printf("recieved: %s\n", command);
     if (strcmp(command, "getFiles") == 0)
     {
         printf("got Command\n");
         returnFiles(sock);
+    }
+    if (strcmp(command, "create") == 0)
+    {
+        printf("got Command\n");
+        createDIR(sock);
     }
     command = malloc (2000 * sizeof(char));
    

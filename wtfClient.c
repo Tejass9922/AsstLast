@@ -181,6 +181,16 @@ int getFiles(int sockfd, char* fileName)
         //close(sockfd);
 }
 
+int create(int sockfd, char* projectName)
+{
+    printf("ProjectName: %s\n", projectName);
+    int status = write(sockfd, projectName, strlen(projectName) + 1);
+    printf("Write Status: %d\n", status);
+    //send(sockfd, projectName, strlen(projectName), 0)
+   
+
+}
+
 int connectToServer(){
      getConfigureDetails();
       if (getConfigureDetails()!=-1){ 
@@ -245,6 +255,14 @@ int main(int argc, char **argv)
            write(sockfd, getFile, strlen(getFile) + 1);
            getFiles(sockfd, argv[2]);
            close(sockfd);
+        }
+        if (strcmp(argv[1], "create") == 0){
+            int sockfd = connectToServer(argv[1], argv[2]);
+            char* createCommand = "create";
+            write(sockfd, createCommand, strlen(createCommand) + 1);
+            create(sockfd, argv[2]);
+            
+
         }
 
        
