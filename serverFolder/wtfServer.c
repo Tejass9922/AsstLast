@@ -8,32 +8,6 @@
 #include <fcntl.h>
 #include <dirent.h>
 
-
-
-int createDIR(int sock)
-{
-    int read_size, write_size;
-    char *message;
-	char* dirName = malloc(100 * sizeof(char));
-    static char command[1000];
-
-    printf("socketCheck: %d\n", sock);
-    int readTemp = recv(sock,dirName,100,0);
-    int check; 
-  
-    check = mkdir(dirName); 
-    char* manifestName = malloc(((sizeof(char) * readTemp) * 2) + 10);
-    strcpy(manifestName, "./");
-    strcat(manifestName, dirName);
-    strcat(manifestName, "/");
-    strcat(manifestName, dirName);
-    strcat(manifestName, ".manifest");
-    printf("readSize: %d  message: %s\n", readTemp, dirName);
-    printf("fileName: %s\n", manifestName);
-    int newFile = open(manifestName, O_WRONLY | O_APPEND | O_CREAT, 0666);
-    printf("newFileFD: %d\n", newFile);
-}
-
 int returnFiles(int sock)
 {
     int read_size, write_size;
@@ -47,11 +21,11 @@ int returnFiles(int sock)
     char c[1];
 
     //recv(sock,client_message,2000,0))
-//int mStatus = recv(sock,client_message,2000,0);
+    //int mStatus = recv(sock,client_message,2000,0);
     printf("Hello: %s\n",client_message);
     while(recv(sock,client_message,2000,0) > 0){
    
-     printf("reachedHere");
+    
      printf("%s\n",client_message);
 
      int file = open(client_message, O_RDONLY, 777);
@@ -84,6 +58,23 @@ int returnFiles(int sock)
     }
 }
 
+void createProject(int sock){
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    read(sock, projectName, 100);
+    printf("recieved project name: %s",projectName);
+    int check = mkdir(projectName,0777);
+    char*filePath = (char*)(malloc(sizeof(char)*100));
+    strcpy(filePath,projectName);
+    strcat(filePath,"/");
+    strcat(filePath,projectName);
+    strcat(filePath,".Manifest");
+    printf("file Path: %s\n",filePath);
+    int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
+     printf("fD %d\n",filedescriptor);
+
+    //Now that we made a physical copy of a directory with the given project name on the server with a manifest
+    //we are supposed to send that over to the client. How do we send it over? In what format?
+}
 
 void *server_handler (void *fd_pointer);
 
@@ -153,29 +144,38 @@ void *server_handler (void *fd_pointer)
 	}
     char* command = malloc(100 * sizeof(char));
 
+    /*
+    if (recv(sock,command,2000,0) > 0)
+    {
+        printf("Recieved\n");
+    }
 
-    //read(sock, command, 100);
-    recv(sock,command,2000,0);
+    if (strcmp(command, "getFiles\0") != 0)
+    {
+        printf("Rec: %s\n", command);
+    }
+    */
+
+
+    read(sock, command, 100);
+    //recv(sock,command,2000,0);
     printf("recieved: %s\n", command);
+    if (strcmp(command,"create")==0)
+    {
+        printf("got Command\n");
+        char* replyCommand = "Got The Command";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
+        createProject(sock);
+    }
     if (strcmp(command, "getFiles") == 0)
     {
         printf("got Command\n");
         returnFiles(sock);
     }
-    if (strcmp(command, "create") == 0)
-    {
-        printf("got Command\n");
-        char* replyCommand = "Got The Command";
-        write(sock, replyCommand, strlen(replyCommand) + 1);
-        createDIR(sock);
-    }
-    command = malloc (2000 * sizeof(char));
-    
-
-
+    command = malloc (100 * sizeof(char));
+   
     //returnFiles(sock);
     
-    //createDIR(sock);
 
     /*
     puts("Client disconnected");
