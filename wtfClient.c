@@ -260,7 +260,12 @@ int main(int argc, char **argv)
             int sockfd = connectToServer(argv[1], argv[2]);
             char* createCommand = "create";
             write(sockfd, createCommand, strlen(createCommand) + 1);
+            char* reply = malloc(50* sizeof(char));
+            recv(sockfd, reply, 2000, 0);
+            printf("Reply: %s\n", reply);
+            //send(sockfd, createCommand, strlen(createCommand) + 1, 0);
             create(sockfd, argv[2]);
+            close(sockfd);
             
 
         }

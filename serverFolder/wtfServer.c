@@ -7,22 +7,31 @@
 #include<pthread.h> //for threading , link with lpthread
 #include <fcntl.h>
 #include <dirent.h>
-#include <dirent.h>
+
 
 
 int createDIR(int sock)
 {
     int read_size, write_size;
     char *message;
-	char* client_message = malloc(sizeof(char) * 2000);
+	char* dirName = malloc(100 * sizeof(char));
     static char command[1000];
 
     printf("socketCheck: %d\n", sock);
-    int readTemp = recv(sock,client_message,2000,0);
+    int readTemp = recv(sock,dirName,100,0);
     int check; 
   
-    check = mkdir(client_message); 
-    printf("readSize: %d  message: %s\n", readTemp, client_message);
+    check = mkdir(dirName); 
+    char* manifestName = malloc(((sizeof(char) * readTemp) * 2) + 10);
+    strcpy(manifestName, "./");
+    strcat(manifestName, dirName);
+    strcat(manifestName, "/");
+    strcat(manifestName, dirName);
+    strcat(manifestName, ".manifest");
+    printf("readSize: %d  message: %s\n", readTemp, dirName);
+    printf("fileName: %s\n", manifestName);
+    int newFile = open(manifestName, O_WRONLY | O_APPEND | O_CREAT, 0666);
+    printf("newFileFD: %d\n", newFile);
 }
 
 int returnFiles(int sock)
@@ -156,12 +165,17 @@ void *server_handler (void *fd_pointer)
     if (strcmp(command, "create") == 0)
     {
         printf("got Command\n");
+        char* replyCommand = "Got The Command";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
         createDIR(sock);
     }
     command = malloc (2000 * sizeof(char));
-   
+    
+
+
     //returnFiles(sock);
     
+    //createDIR(sock);
 
     /*
     puts("Client disconnected");
