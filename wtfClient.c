@@ -12,18 +12,20 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include<time.h>
+#include <dirent.h>
 
-struct File{
+
+typedef struct File{
     int version;
     char* filePath;
     char* hash;
     struct File* next;
-};
+}File;
 
-struct Manifest{
+typedef struct Manifest{
     int ProjectVersion;
     struct File fileHead; 
-};
+}Manifest;
 
 typedef struct ConfigureInfo{
 
@@ -48,13 +50,69 @@ void setTimeout(int milliseconds)
     } while (milliseconds_since <= end);
 }
 
-void add(char*projectName, char*fileName){
-//find filePath
-//connectToServer(fileName);
-//try to make the connection variables ussed global so we can call them here
+void add(char*projectName, char*fileName)
+{
+        File* nF = (File*)(malloc(sizeof(File)));
+        char x =  nF->version++;
+        int i = -1;
+        struct dirent *de;  
+        DIR *dr = opendir(projectName); 
+        if (dr == NULL)  
+        { 
+            printf("Could not open current directory" ); 
+            
+        } 
+        else{
+           i= connectToServer();
+        }
+        if (i!=-1){
+            //somehow get the manifest of the Client and add this file 
+            //Initially the Manifest/project folder for this particular projectName will be created using the create function
+            //open file and hash it and save it.
+            char*hash;
+            int len = strlen(projectName);
+            char sp  = ' '; //subject to change if we have files and/dirs with spaces in them
+            char manifestExtension[10] = ".Manifest";
+            char*total = malloc(len+2+strlen(manifestExtension));
+            strcat(total,projectName);
+            strcat(total,manifestExtension);
+
+            printf("%s\n",total);
+            
+             while ((de = readdir(dr)) != NULL) {
+                 if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0){
+                     if (strcmp(de->d_name,total)==0){
+                         int fd = open(total,O_RDWR|O_APPEND);
+                         if (fd!=-1){
+                             write(fd,&x,1);
+                             write(fd,&sp,1);
+                             write(fd,projectName,strlen(projectName));
+                             write(fd,&sp,1);
+                             write(fd,fileName,strlen(fileName));
+                             write(fd,&sp,1);
+                             write(fd,hash,strlen(hash));
+                         }
+                     }
+                }
+             }
+               
+        }
 
 }
 
+void create(int socket, char* projectName){
+   int len = strlen(projectName)+1;
+   send(socket,projectName,len,0);
+   
+
+}
+
+void checkout(char*projectName){
+   
+  int socket =  connectToServer();
+
+
+}
 int getConfigureDetails(){
 
     char name[17] = "server.configure"; 
@@ -181,16 +239,6 @@ int getFiles(int sockfd, char* fileName)
         //close(sockfd);
 }
 
-int create(int sockfd, char* projectName)
-{
-    printf("ProjectName: %s\n", projectName);
-    int status = write(sockfd, projectName, strlen(projectName) + 1);
-    printf("Write Status: %d\n", status);
-    //send(sockfd, projectName, strlen(projectName), 0)
-   
-
-}
-
 int connectToServer(){
      getConfigureDetails();
       if (getConfigureDetails()!=-1){ 
@@ -256,18 +304,16 @@ int main(int argc, char **argv)
            getFiles(sockfd, argv[2]);
            close(sockfd);
         }
-        if (strcmp(argv[1], "create") == 0){
-            int sockfd = connectToServer(argv[1], argv[2]);
-            char* createCommand = "create";
-            write(sockfd, createCommand, strlen(createCommand) + 1);
+        if (strcmp(argv[1],"create")==0){
+            int socket =  connectToServer();
+            char command[6] = "create";
+            send(socket,command,6,0);
             char* reply = malloc(50* sizeof(char));
-            recv(sockfd, reply, 2000, 0);
+            recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
-            //send(sockfd, createCommand, strlen(createCommand) + 1, 0);
-            create(sockfd, argv[2]);
-            close(sockfd);
             
-
+            create(socket, argv[2]);
+            
         }
 
        
