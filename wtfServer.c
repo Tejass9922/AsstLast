@@ -148,7 +148,7 @@ void *server_handler (void *fd_pointer)
         printf("got Command\n");
         returnFiles(sock);
     }
-    command = malloc (100 * sizeof(char));
+    command = malloc (2000 * sizeof(char));
    
     //returnFiles(sock);
     
