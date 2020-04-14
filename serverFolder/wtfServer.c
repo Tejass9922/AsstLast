@@ -103,24 +103,25 @@ void createProject(int sock){
         printf("fD %d\n",filedescriptor);
         write(filedescriptor, "Version 1.0", 11);
         close(filedescriptor);
+
+        char* response = malloc(sizeof(char) * 100);
+        send(sock,filePath ,strlen(filePath),0);
+
+        int recieve;
+        recieve = recv(sock, response ,100,0);
+        printf("Client Response: %s\n", response);
+
+        printf("File Contents: %s\n", readInFile(filePath));
+    //how do you know how much memory to allocate for this buffer 
+        char* fileContents = malloc(sizeof(char) * 100);
+        fileContents = readInFile(filePath);
+        send(sock, fileContents, strlen(readInFile(filePath)), 0);
             
     } 
         else{
+            write(sock,"PROJ_EXISTS",11);
             printf("\n**Project already Exists**\n");
         }
-
-    char* response = malloc(sizeof(char) * 100);
-    send(sock,filePath ,strlen(filePath),0);
-
-    int recieve;
-    recieve = recv(sock, response ,100,0);
-    printf("Client Response: %s\n", response);
-
-    print("File Contents: %s\n", readInFile(filePath));
-
-
-
-
 
 
     //Now that we made a physical copy of a directory with the given project name on the server with a manifest

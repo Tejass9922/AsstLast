@@ -109,9 +109,14 @@ void create(int socket, char* projectName){
    char* fileName = malloc(sizeof(char) * 100);
 
    int recieve = recv(socket,fileName,100,0);
+   if (strcmp("PROJ_EXISTS", fileName) == 0)
+   {
+       printf("Project exists\n");
+       return;
+   }
    if (recieve > 0)
    {
-       printf("Got File Name: %s", fileName);
+       printf("Got File Name: %s\n", fileName);
        send(socket,"Got File Name",13 ,0);
    }
    else
@@ -119,11 +124,24 @@ void create(int socket, char* projectName){
        printf("Did not get fileName\n");
        send(socket,"Did Not Recieve File Name", 26 ,0);
    }
+   recieve = 0;
    
    int filedescriptor = open(fileName, O_RDWR | O_APPEND | O_CREAT,0777); 
 
+   char* fileContents = malloc(sizeof(char) * 100);
 
-   
+   recieve = recv(socket,fileContents,100,0);
+
+   if (recieve > 0)
+   {
+       printf("Got Contents: %s\n", fileContents);  
+   }
+   else
+   {
+       printf("Did not get fileName\n");   
+   }
+
+   write(filedescriptor, fileContents, strlen(fileContents));
 
 
    
