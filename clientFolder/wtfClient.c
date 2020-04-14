@@ -12,6 +12,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include<time.h>
+#include <openssl/sha.h>
 #include <dirent.h>
 
 
@@ -52,38 +53,57 @@ void setTimeout(int milliseconds)
 
 void add(char*projectName, char*fileName)
 {
-        File* nF = (File*)(malloc(sizeof(File)));
+       
         char nL = '\n';
-        char x =  nF->version++;
+        char x =  1+'0';
         int i = -1;
-        struct dirent *de;  
+        struct dirent *de; 
         DIR *dr = opendir(projectName); 
         if (dr == NULL)  
         { 
-            printf("Could not open current directory" ); 
+            printf("Project does not Exist" ); 
             
         } 
         else{
-           i= connectToServer();
-        }
-        if (i!=-1){
-            //somehow get the manifest of the Client and add this file 
-            //Initially the Manifest/project folder for this particular projectName will be created using the create function
-            //open file and hash it and save it.
-            char*hash;
+         
+            char path[strlen(projectName)+5+strlen(fileName)];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,fileName);
+           
+            int fd1 = open(path,O_RDONLY);
+           
+             char hash[SHA_DIGEST_LENGTH];
+            if (fd1!=-1){
+                int status;
+                char c;
+                char*buffer = (char*)malloc(sizeof(char)*1);
+                do{
+                     status = read(fd1,&c,1);
+                    if (status<=0)
+                        break;
+                    int len = strlen(buffer);
+                    buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                    buffer[len] = c;
+                    buffer[len+1] = '\0'; 
+                }while(status>0); 
+                SHA1(buffer, strlen(buffer), hash);
+               
+            }
             int len = strlen(projectName);
             char sp  = ' '; //subject to change if we have files and/dirs with spaces in them
-            char manifestExtension[10] = ".Manifest";
-            char*total = malloc(len+2+strlen(manifestExtension));
-            strcat(total,projectName);
-            strcat(total,manifestExtension);
-
-            printf("%s\n",total);
             
              while ((de = readdir(dr)) != NULL) {
                  if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0){
-                     if (strcmp(de->d_name,total)==0){
-                         int fd = open(total,O_RDWR|O_APPEND);
+                     if (strcmp(de->d_name,".Manifest")==0){
+                         char manifestExtension[10];
+                         strcpy(manifestExtension,".Manifest");
+                        char manifestPath[strlen(projectName)+5+strlen(fileName)];
+                        strcpy(manifestPath,projectName);
+                        strcat(manifestPath,"/");
+                        strcat(manifestPath,manifestExtension);
+                         int fd = open(manifestPath,O_RDWR|O_APPEND);
+                     
                          if (fd!=-1){
                              write(fd,&nL,1);
                              write(fd,&x,1);
@@ -154,7 +174,7 @@ void create(int socket, char* projectName){
 
    write(filedescriptor, fileContents, strlen(fileContents));
    
-
+close(filedescriptor);
 
    
 
@@ -397,6 +417,10 @@ int main(int argc, char **argv)
             recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
             destroy(socket, argv[2]);  
+        }
+        if (strcmp(argv[1],"add")==0)
+        {
+            add(argv[2],argv[3]);
         }
 
        
