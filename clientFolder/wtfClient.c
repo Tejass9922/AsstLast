@@ -100,6 +100,12 @@ void add(char*projectName, char*fileName)
 
 }
 
+void destroy(int socket, char* projectName)
+{
+    int len = strlen(projectName)+1;
+    send(socket,projectName,len,0);
+}
+
 void create(int socket, char* projectName){
    int len = strlen(projectName)+1;
    int check = mkdir(projectName,0777);
@@ -142,6 +148,7 @@ void create(int socket, char* projectName){
    }
 
    write(filedescriptor, fileContents, strlen(fileContents));
+   
 
 
    
@@ -375,9 +382,16 @@ int main(int argc, char **argv)
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
-            
-            create(socket, argv[2]);
-            
+            create(socket, argv[2]);  
+        }
+        if (strcmp(argv[1],"destroy")==0){
+            int socket =  connectToServer();
+            char command[7] = "destroy";
+            send(socket,command,7,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket, reply, 2000, 0);
+            printf("Reply: %s\n", reply);
+            destroy(socket, argv[2]);  
         }
 
        

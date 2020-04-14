@@ -7,6 +7,7 @@
 #include<pthread.h> //for threading , link with lpthread
 #include <fcntl.h>
 #include <dirent.h>
+#include <unistd.h>
 
 int returnFiles(int sock)
 {
@@ -83,6 +84,33 @@ char* readInFile(char* fileName)
 
 }
 
+void destroyProject(int sock)
+{
+    
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    read(sock, projectName, 100);
+    DIR *dr = opendir(projectName); 
+    if (dr != NULL)
+    {
+        closedir(dr);
+        int check = remove(projectName);
+        if (check == -1)
+        {
+            printf("Unable to delete folder\n");
+            return;
+        }
+        printf("Check DRe: %d\n", check);
+        printf("Successfully Destroyed\n");
+        return;
+    }
+    else
+    {
+        closedir(dr);
+        printf("Project Does not Exist\n");
+        return;
+    }
+}
+
 void createProject(int sock){
 
 //test to see if push works
@@ -96,7 +124,7 @@ void createProject(int sock){
         int check = mkdir(projectName,0777);     
         strcpy(filePath,projectName);
         strcat(filePath,"/");
-        strcat(filePath,projectName);
+        //strcat(filePath,projectName);
         strcat(filePath,".Manifest");
         printf("file Path: %s\n",filePath);
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
@@ -116,6 +144,7 @@ void createProject(int sock){
         char* fileContents = malloc(sizeof(char) * 100);
         fileContents = readInFile(filePath);
         send(sock, fileContents, strlen(readInFile(filePath)), 0);
+        closedir(dr);
             
     } 
         else{
@@ -185,7 +214,7 @@ int main(int argc, char **argv)
 
 void *server_handler (void *fd_pointer)
 {
-	printf("Hello Server Handler \n");
+	printf("In Server Handler\n");
 	int sock = *(int *)fd_pointer;
     //char client_message[2000];
 	static int send_once = 0;
@@ -196,49 +225,30 @@ void *server_handler (void *fd_pointer)
 	}
     char* command = malloc(100 * sizeof(char));
 
-    /*
-    if (recv(sock,command,2000,0) > 0)
-    {
-        printf("Recieved\n");
-    }
-
-    if (strcmp(command, "getFiles\0") != 0)
-    {
-        printf("Rec: %s\n", command);
-    }
-    */
-
-
     read(sock, command, 100);
     //recv(sock,command,2000,0);
     printf("recieved: %s\n", command);
     if (strcmp(command,"create")==0)
     {
-        printf("got Command\n");
-        char* replyCommand = "Got The Command";
+        printf("got Command to create\n");
+        char* replyCommand = "Got The Command to create";
         write(sock, replyCommand, strlen(replyCommand) + 1);
         createProject(sock);
     }
+    if (strcmp(command, "destroy") == 0)
+    {
+        printf("got Command to destroy\n");
+        char* replyCommand = "Got The Command to destroy";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
+        destroyProject(sock);
+    }
     if (strcmp(command, "getFiles") == 0)
     {
-        printf("got Command\n");
+        printf("got Command to get files\n");
+        char* replyCommand = "Got The Command to get files";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
         returnFiles(sock);
     }
     command = malloc (100 * sizeof(char));
    
-    //returnFiles(sock);
-    
-
-    /*
-    puts("Client disconnected");
-        fflush(stdout);
-    
-	else if(read_size == -1)
-    {
-        perror("recv failed");
-    }
-    free(fd_pointer);
-     
-    return 0;
-    */
 }
