@@ -53,6 +53,7 @@ void setTimeout(int milliseconds)
 void add(char*projectName, char*fileName)
 {
         File* nF = (File*)(malloc(sizeof(File)));
+        char nL = '\n';
         char x =  nF->version++;
         int i = -1;
         struct dirent *de;  
@@ -84,6 +85,7 @@ void add(char*projectName, char*fileName)
                      if (strcmp(de->d_name,total)==0){
                          int fd = open(total,O_RDWR|O_APPEND);
                          if (fd!=-1){
+                             write(fd,&nL,1);
                              write(fd,&x,1);
                              write(fd,&sp,1);
                              write(fd,projectName,strlen(projectName));
