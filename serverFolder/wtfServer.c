@@ -198,7 +198,7 @@ int main(int argc, char **argv)
 		puts("Connection accepted");
 		
 		pthread_t server_thread;
-        new_sock = malloc(1);
+        new_sock = malloc(sizeof(int));
         *new_sock = connfd;
 		pthread_create(&server_thread,NULL,server_handler,(void*) new_sock);
 	}
