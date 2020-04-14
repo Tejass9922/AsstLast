@@ -7,6 +7,7 @@
 #include<pthread.h> //for threading , link with lpthread
 #include <fcntl.h>
 #include <dirent.h>
+#include <unistd.h>
 
 int returnFiles(int sock)
 {
@@ -58,27 +59,99 @@ int returnFiles(int sock)
     }
 }
 
+char* readInFile(char* fileName)
+{
+    char* buffer = malloc(sizeof(char) *1);
+    char c;
+    int fd = open(fileName,O_RDWR);
+    int status;
+
+    do{
+   
+            status =  read(fd, &c, 1); 
+            if (status<=0){
+                break;
+            }
+            else{   
+                int len = strlen(buffer);
+                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                buffer[len] = c;
+                buffer[len+1] = '\0';    
+            }
+        }while(status >0);
+    close(fd);
+    return buffer; 
+
+}
+
+void destroyProject(int sock)
+{
+    
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+
+    read(sock, projectName, 100);
+    DIR *dr = opendir(projectName); 
+    char* pathToDelete = malloc(sizeof(char) * 100);
+    strcpy(pathToDelete, "rm -rf ");
+    strcat(pathToDelete, projectName);
+    //printf("Path to delete: %s\n", pathToDelete);   
+    if (dr != NULL)
+    {
+        closedir(dr);
+        printf("Successfully Destroyed\n");
+        send(sock, "Successfully Deleted", 20, 0);
+        system(pathToDelete);
+        return;
+    }
+    else
+    {
+        closedir(dr);
+        printf("Project Does not Exist\n");
+        send(sock,"Project Does not Exist", 22, 0);
+        return;
+    }
+}
+
 void createProject(int sock){
     char*projectName = (char*)(malloc(sizeof(char)*100));
     read(sock, projectName, 100);
     printf("recieved project name: %s",projectName);
+    char*filePath = (char*)(malloc(sizeof(char)*100));
     DIR *dr = opendir(projectName); 
     if (dr == NULL)  
     { 
-        int check = mkdir(projectName,0777);
-        char*filePath = (char*)(malloc(sizeof(char)*100));
+        int check = mkdir(projectName,0777);     
         strcpy(filePath,projectName);
         strcat(filePath,"/");
-        strcat(filePath,projectName);
+        //strcat(filePath,projectName);
         strcat(filePath,".Manifest");
         printf("file Path: %s\n",filePath);
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
+        write(filedescriptor, "Version 1.0", 11);
+        close(filedescriptor);
+
+        char* response = malloc(sizeof(char) * 100);
+        send(sock,filePath ,strlen(filePath),0);
+
+        int recieve;
+        recieve = recv(sock, response ,100,0);
+        printf("Client Response: %s\n", response);
+
+        printf("File Contents: %s\n", readInFile(filePath));
+    //how do you know how much memory to allocate for this buffer 
+        char* fileContents = malloc(sizeof(char) * 100);
+        fileContents = readInFile(filePath);
+        send(sock, fileContents, strlen(readInFile(filePath)), 0);
+        closedir(dr);
             
     } 
         else{
+            write(sock,"PROJ_EXISTS",11);
             printf("\n**Project already Exists**\n");
         }
+
+
     //Now that we made a physical copy of a directory with the given project name on the server with a manifest
     //we are supposed to send that over to the client. How do we send it over? In what format?
 }
@@ -123,7 +196,7 @@ int main(int argc, char **argv)
 		puts("Connection accepted");
 		
 		pthread_t server_thread;
-        new_sock = malloc(1);
+        new_sock = malloc(sizeof(int));
         *new_sock = connfd;
 		pthread_create(&server_thread,NULL,server_handler,(void*) new_sock);
 	}
@@ -140,7 +213,7 @@ int main(int argc, char **argv)
 
 void *server_handler (void *fd_pointer)
 {
-	printf("Hello Server Handler \n");
+	printf("In Server Handler\n");
 	int sock = *(int *)fd_pointer;
     //char client_message[2000];
 	static int send_once = 0;
@@ -151,49 +224,30 @@ void *server_handler (void *fd_pointer)
 	}
     char* command = malloc(100 * sizeof(char));
 
-    /*
-    if (recv(sock,command,2000,0) > 0)
-    {
-        printf("Recieved\n");
-    }
-
-    if (strcmp(command, "getFiles\0") != 0)
-    {
-        printf("Rec: %s\n", command);
-    }
-    */
-
-
     read(sock, command, 100);
     //recv(sock,command,2000,0);
     printf("recieved: %s\n", command);
     if (strcmp(command,"create")==0)
     {
-        printf("got Command\n");
-        char* replyCommand = "Got The Command";
+        printf("got Command to create\n");
+        char* replyCommand = "Got The Command to create";
         write(sock, replyCommand, strlen(replyCommand) + 1);
         createProject(sock);
     }
+    if (strcmp(command, "destroy") == 0)
+    {
+        printf("got Command to destroy\n");
+        char* replyCommand = "Got The Command to destroy";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
+        destroyProject(sock);
+    }
     if (strcmp(command, "getFiles") == 0)
     {
-        printf("got Command\n");
+        printf("got Command to get files\n");
+        char* replyCommand = "Got The Command to get files";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
         returnFiles(sock);
     }
     command = malloc (100 * sizeof(char));
    
-    //returnFiles(sock);
-    
-
-    /*
-    puts("Client disconnected");
-        fflush(stdout);
-    
-	else if(read_size == -1)
-    {
-        perror("recv failed");
-    }
-    free(fd_pointer);
-     
-    return 0;
-    */
 }

@@ -102,9 +102,60 @@ void add(char*projectName, char*fileName)
 
 }
 
+void destroy(int socket, char* projectName)
+{
+    char* returnMessage = malloc (sizeof(char) * 50);
+    int len = strlen(projectName)+1;
+    send(socket,projectName,len,0);
+    recv(socket, returnMessage, 50, 0);
+    printf("%s\n", returnMessage);
+}
+
 void create(int socket, char* projectName){
    int len = strlen(projectName)+1;
+   int check = mkdir(projectName,0777);
+
    send(socket,projectName,len,0);
+
+   char* fileName = malloc(sizeof(char) * 100);
+
+   int recieve = recv(socket,fileName,100,0);
+   if (strcmp("PROJ_EXISTS", fileName) == 0)
+   {
+       printf("Project exists\n");
+       return;
+   }
+   if (recieve > 0)
+   {
+       printf("Got File Name: %s\n", fileName);
+       send(socket,"Got File Name",13 ,0);
+   }
+   else
+   {
+       printf("Did not get fileName\n");
+       send(socket,"Did Not Recieve File Name", 26 ,0);
+   }
+   recieve = 0;
+   
+   int filedescriptor = open(fileName, O_RDWR | O_APPEND | O_CREAT,0777); 
+
+   char* fileContents = malloc(sizeof(char) * 100);
+
+   recieve = recv(socket,fileContents,100,0);
+
+   if (recieve > 0)
+   {
+       printf("Got Contents: %s\n", fileContents);  
+   }
+   else
+   {
+       printf("Did not get fileName\n");   
+   }
+
+   write(filedescriptor, fileContents, strlen(fileContents));
+   
+
+
    
 
 }
@@ -173,6 +224,29 @@ void configure(char* host, char* port){
     write(fd,&sp,1);
     write(fd,port, strlen(port));
 
+}
+
+char* readInFile(char* fileName)
+{
+    char* buffer = malloc(sizeof(char) *1);
+    char c;
+    int fd = open(fileName,O_RDWR);
+    int status;
+
+    do{
+   
+            status =  read(fd, &c, 1); 
+            if (status<=0){
+                break;
+            }
+            else{   
+                int len = strlen(buffer);
+                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                buffer[len] = c;
+                buffer[len+1] = '\0';    
+            }
+        }while(status >0);
+    return buffer; 
 }
 
 int getFiles(int sockfd, char* fileName)
@@ -313,9 +387,16 @@ int main(int argc, char **argv)
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
-            
-            create(socket, argv[2]);
-            
+            create(socket, argv[2]);  
+        }
+        if (strcmp(argv[1],"destroy")==0){
+            int socket =  connectToServer();
+            char command[7] = "destroy";
+            send(socket,command,7,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket, reply, 2000, 0);
+            printf("Reply: %s\n", reply);
+            destroy(socket, argv[2]);  
         }
 
        
