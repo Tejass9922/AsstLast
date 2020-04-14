@@ -88,25 +88,26 @@ void destroyProject(int sock)
 {
     
     char*projectName = (char*)(malloc(sizeof(char)*100));
+
     read(sock, projectName, 100);
     DIR *dr = opendir(projectName); 
+    char* pathToDelete = malloc(sizeof(char) * 100);
+    strcpy(pathToDelete, "rm -rf ");
+    strcat(pathToDelete, projectName);
+    //printf("Path to delete: %s\n", pathToDelete);   
     if (dr != NULL)
     {
         closedir(dr);
-        int check = remove(projectName);
-        if (check == -1)
-        {
-            printf("Unable to delete folder\n");
-            return;
-        }
-        printf("Check DRe: %d\n", check);
         printf("Successfully Destroyed\n");
+        send(sock, "Successfully Deleted", 20, 0);
+        system(pathToDelete);
         return;
     }
     else
     {
         closedir(dr);
         printf("Project Does not Exist\n");
+        send(sock,"Project Does not Exist", 22, 0);
         return;
     }
 }

@@ -102,8 +102,11 @@ void add(char*projectName, char*fileName)
 
 void destroy(int socket, char* projectName)
 {
+    char* returnMessage = malloc (sizeof(char) * 50);
     int len = strlen(projectName)+1;
     send(socket,projectName,len,0);
+    recv(socket, returnMessage, 50, 0);
+    printf("%s\n", returnMessage);
 }
 
 void create(int socket, char* projectName){
