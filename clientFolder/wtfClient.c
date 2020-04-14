@@ -102,7 +102,30 @@ void add(char*projectName, char*fileName)
 
 void create(int socket, char* projectName){
    int len = strlen(projectName)+1;
+   int check = mkdir(projectName,0777);
+
    send(socket,projectName,len,0);
+
+   char* fileName = malloc(sizeof(char) * 100);
+
+   int recieve = recv(socket,fileName,100,0);
+   if (recieve > 0)
+   {
+       printf("Got File Name: %s", fileName);
+       send(socket,"Got File Name",13 ,0);
+   }
+   else
+   {
+       printf("Did not get fileName\n");
+       send(socket,"Did Not Recieve File Name", 26 ,0);
+   }
+   
+   int filedescriptor = open(fileName, O_RDWR | O_APPEND | O_CREAT,0777); 
+
+
+   
+
+
    
 
 }
@@ -171,6 +194,29 @@ void configure(char* host, char* port){
     write(fd,&sp,1);
     write(fd,port, strlen(port));
 
+}
+
+char* readInFile(char* fileName)
+{
+    char* buffer = malloc(sizeof(char) *1);
+    char c;
+    int fd = open(fileName,O_RDWR);
+    int status;
+
+    do{
+   
+            status =  read(fd, &c, 1); 
+            if (status<=0){
+                break;
+            }
+            else{   
+                int len = strlen(buffer);
+                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                buffer[len] = c;
+                buffer[len+1] = '\0';    
+            }
+        }while(status >0);
+    return buffer; 
 }
 
 int getFiles(int sockfd, char* fileName)

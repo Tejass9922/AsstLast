@@ -58,17 +58,42 @@ int returnFiles(int sock)
     }
 }
 
+char* readInFile(char* fileName)
+{
+    char* buffer = malloc(sizeof(char) *1);
+    char c;
+    int fd = open(fileName,O_RDWR);
+    int status;
+
+    do{
+   
+            status =  read(fd, &c, 1); 
+            if (status<=0){
+                break;
+            }
+            else{   
+                int len = strlen(buffer);
+                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                buffer[len] = c;
+                buffer[len+1] = '\0';    
+            }
+        }while(status >0);
+    close(fd);
+    return buffer; 
+
+}
+
 void createProject(int sock){
 
 //test to see if push works
     char*projectName = (char*)(malloc(sizeof(char)*100));
     read(sock, projectName, 100);
     printf("recieved project name: %s",projectName);
+    char*filePath = (char*)(malloc(sizeof(char)*100));
     DIR *dr = opendir(projectName); 
     if (dr == NULL)  
     { 
-        int check = mkdir(projectName,0777);
-        char*filePath = (char*)(malloc(sizeof(char)*100));
+        int check = mkdir(projectName,0777);     
         strcpy(filePath,projectName);
         strcat(filePath,"/");
         strcat(filePath,projectName);
@@ -76,11 +101,28 @@ void createProject(int sock){
         printf("file Path: %s\n",filePath);
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
+        write(filedescriptor, "Version 1.0", 11);
+        close(filedescriptor);
             
     } 
         else{
             printf("\n**Project already Exists**\n");
         }
+
+    char* response = malloc(sizeof(char) * 100);
+    send(sock,filePath ,strlen(filePath),0);
+
+    int recieve;
+    recieve = recv(sock, response ,100,0);
+    printf("Client Response: %s\n", response);
+
+    print("File Contents: %s\n", readInFile(filePath));
+
+
+
+
+
+
     //Now that we made a physical copy of a directory with the given project name on the server with a manifest
     //we are supposed to send that over to the client. How do we send it over? In what format?
 }
