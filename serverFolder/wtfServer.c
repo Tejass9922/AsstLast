@@ -9,6 +9,46 @@
 #include <dirent.h>
 #include <unistd.h>
 
+char* readInFile(char* fileName);
+void commit(int socket){
+    
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(socket, projectName, 100, 0);
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+     char path[strlen(projectName)+5+strlen(".Manifest")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".Manifest");
+
+
+
+    DIR *dr = opendir(projectName); 
+        if (dr == NULL)  
+        { 
+            printf("Project does not Exist" );
+            return;
+            
+        } 
+        else
+        {
+            char*buffer = readInFile(path);
+            int length = strlen(buffer);
+            char size[10];
+            sprintf(size,"%d",length);
+            send(socket,size,1,0);
+            char temp[8];
+            recv(socket,temp,8,0);
+            send(socket,buffer,length,0);
+
+        }
+        
+        
+
+}
 int returnFiles(int sock)
 {
     int read_size, write_size;
@@ -83,6 +123,7 @@ char* readInFile(char* fileName)
     return buffer; 
 
 }
+
 
 void destroyProject(int sock)
 {
@@ -248,6 +289,14 @@ void *server_handler (void *fd_pointer)
         write(sock, replyCommand, strlen(replyCommand) + 1);
         returnFiles(sock);
     }
+    if (strcmp(command, "commit") == 0)
+    {
+        printf("got Command to commit\n");
+        char* replyCommand = "Got The Command to commit";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
+        commit(sock);
+    }
     command = malloc (100 * sizeof(char));
    
 }
+
