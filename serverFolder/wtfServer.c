@@ -1,14 +1,62 @@
-#include<stdio.h>
-#include<string.h>    //strlen
-#include<stdlib.h>    //strlen
-#include<sys/socket.h>
-#include<arpa/inet.h> //inet_addr
-#include<unistd.h>    //write
-#include<pthread.h> //for threading , link with lpthread
+#include<pthread.h> 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <stdbool.h> 
+#include <netinet/in.h>
+#include <arpa/inet.h>
 #include <fcntl.h>
-#include <dirent.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
+#include <strings.h>
+#include <string.h>
+#include <sys/stat.h>
 #include <unistd.h>
+#include<time.h>
+#include <openssl/sha.h>
+#include <dirent.h>
 
+char* readInFile(char* fileName);
+void commit(int socket){
+    
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(socket, projectName, 100, 0);
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+     char path[strlen(projectName)+5+strlen(".Manifest")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".Manifest");
+
+
+
+    DIR *dr = opendir(projectName); 
+        if (dr == NULL)  
+        { 
+            printf("Project does not Exist" );
+            return;
+            
+        } 
+        else
+        {
+            char*buffer = readInFile(path);
+            int length = strlen(buffer);
+            printf("Buffer Length: %d\n", length);
+            char size[10];
+            sprintf(size,"%d",length);
+            send(socket,size,10,0);
+            char temp[8];
+            recv(socket,temp,8,0);
+            send(socket,buffer,length,0);
+
+        }
+        
+        
+
+}
 int returnFiles(int sock)
 {
     int read_size, write_size;
@@ -83,6 +131,7 @@ char* readInFile(char* fileName)
     return buffer; 
 
 }
+
 
 void destroyProject(int sock)
 {
@@ -247,6 +296,13 @@ void *server_handler (void *fd_pointer)
         char* replyCommand = "Got The Command to get files";
         write(sock, replyCommand, strlen(replyCommand) + 1);
         returnFiles(sock);
+    }
+    if (strcmp(command, "commit") == 0)
+    {
+        printf("got Command to commit\n");
+        char* replyCommand = "Got The Command to commit";
+        write(sock, replyCommand, strlen(replyCommand) + 1);
+        commit(sock);
     }
     command = malloc (100 * sizeof(char));
    
