@@ -16,6 +16,7 @@
 #include <dirent.h>
 #include <openssl/err.h>
 
+
 char* readInFile(char* fileName);
 typedef struct File{
     int version;
@@ -29,13 +30,18 @@ typedef struct Manifest{
     struct File* fileHead; 
 }Manifest;
 
+
 typedef struct ConfigureInfo{
 
     char*IP;
     int portNumber;
 }ConfigureInfo;
 
+
+
 ConfigureInfo info;
+
+
 void insertFileNode(File **head, File *newNode)
 {
     newNode->next = *head;
@@ -307,7 +313,8 @@ void add(char*projectName, char*fileName)
             strcat(path,fileName);
            
             int fd1 = open(path,O_RDONLY);
-            
+            if (fd1!=-1){
+
             char hash[SHA_DIGEST_LENGTH];
             char hexHash[SHA_DIGEST_LENGTH];
             printf("shaLength: %d\n", SHA_DIGEST_LENGTH);
@@ -330,15 +337,6 @@ void add(char*projectName, char*fileName)
 
             char* buffer = readInFile(path);
             SHA1(buffer, strlen(buffer), hash);
-            /*
-            int i = 0;
-            while (i < 20)
-            {
-                printf("%02x",hash[i]);
-                i++;
-            }
-            printf("\n");
-            */
             
             char test[40];
             int j = 0;
@@ -384,6 +382,12 @@ void add(char*projectName, char*fileName)
                 }
              }
                
+        }
+        else
+        {
+            printf("**File is not in the Project**\n");
+        }
+        
         }
 
 }
@@ -515,7 +519,7 @@ char* readInFile(char* fileName)
     char c;
     int fd = open(fileName,O_RDWR);
     int status;
-
+    if (fd!=-1){
     do{
    
             status =  read(fd, &c, 1); 
@@ -530,6 +534,8 @@ char* readInFile(char* fileName)
             }
         }while(status >0);
     return buffer; 
+    }
+    printf("Cannot open the file");
 }
 
 int getFiles(int sockfd, char* fileName)
