@@ -56,6 +56,48 @@ void commit(int socket){
         
         
 
+<<<<<<< HEAD
+=======
+char* readInFile(char* fileName);
+void commit(int socket){
+    
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(socket, projectName, 100, 0);
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+     char path[strlen(projectName)+5+strlen(".Manifest")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".Manifest");
+
+
+
+    DIR *dr = opendir(projectName); 
+        if (dr == NULL)  
+        { 
+            printf("Project does not Exist" );
+            return;
+            
+        } 
+        else
+        {
+            char*buffer = readInFile(path);
+            int length = strlen(buffer);
+            char size[10];
+            sprintf(size,"%d",length);
+            send(socket,size,10,0);
+            char temp[8];
+            recv(socket,temp,8,0);
+            send(socket,buffer,length,0);
+
+        }
+        
+        
+
+>>>>>>> 29752937337c8607694324a50baf62c7ec698752
 }
 int returnFiles(int sock)
 {
@@ -177,7 +219,7 @@ void createProject(int sock){
         printf("file Path: %s\n",filePath);
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
-        write(filedescriptor, "Version 1.0", 11);
+        write(filedescriptor, "1\n", 2);
         close(filedescriptor);
 
         char* response = malloc(sizeof(char) * 100);
@@ -307,3 +349,4 @@ void *server_handler (void *fd_pointer)
     command = malloc (100 * sizeof(char));
    
 }
+

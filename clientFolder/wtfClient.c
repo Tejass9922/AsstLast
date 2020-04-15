@@ -11,11 +11,12 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include<time.h>
+#include <time.h>
 #include <openssl/sha.h>
 #include <dirent.h>
+#include <openssl/err.h>
 
-
+char* readInFile(char* fileName);
 typedef struct File{
     int version;
     char* filePath;
@@ -35,6 +36,236 @@ typedef struct ConfigureInfo{
 }ConfigureInfo;
 
 ConfigureInfo info;
+void insertFileNode(File **head, File *newNode)
+{
+    newNode->next = *head;
+    *head = newNode;
+}
+
+File* createFileNode(int version, char* filePath, char* hash)
+{
+    struct File* temp = (struct File*)malloc(sizeof(File));
+    temp->filePath = filePath;
+    temp->version = version;
+    temp->hash = hash;
+    return temp;
+}
+
+
+
+void commit(char* projectName, int socket){
+
+    int len = strlen(projectName)+1;
+    send(socket,projectName,len,0);
+
+    char* recieveSize = malloc (sizeof(char) * 10);
+
+    recv(socket, recieveSize, 10, 0);
+    int size = atoi(recieveSize);
+    printf("Recieve size: %s\n", recieveSize);
+    printf("Size of Server Manifest: %d\n",size);
+    send(socket,"Got Size", 8 ,0);
+    char*serverManifest =(char*)(malloc(sizeof(char)*size));
+    recv(socket,serverManifest,size,0);
+    printf("check: %s\n",serverManifest);
+
+   
+    Manifest* server;
+    File* sHead;
+
+   int i=0;
+    char*buffer = (char*)malloc(sizeof(char)*1);
+    while (serverManifest[i]!='\n'){
+        int len = strlen(buffer);
+        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+        buffer[len] = serverManifest[i];
+        buffer[len+1] = '\0';
+        i++;
+    }
+    i++;
+    
+    //server->ProjectVersion = atoi(buffer);
+   // printf("version: %d\n", server->ProjectVersion);
+    int temp = atoi(buffer);
+    printf("version check: %d\n", temp);
+    int count = 0;
+    int version;
+    char*filePath;
+    char*hash;
+    buffer = (char*)malloc(sizeof(char)*1);
+    while (i<strlen(serverManifest))
+    {
+        //printf("Char Check: %c\n", serverManifest[i]);
+        if (serverManifest[i]==' '){
+            
+            if (count==0)
+            {
+                 version = atoi(buffer);
+                 //printf("version check: %d\n", version);
+                 buffer = malloc(sizeof(char) *1);
+                 count++;
+            }
+            else if (count==1)
+            {
+               filePath = malloc(strlen(buffer));
+               strcpy(filePath,buffer);
+               memmove(filePath, filePath+1, strlen(filePath));
+               //mem move gets ride of extra space at the beginning 
+               //printf("FilePath: %s\n", filePath);
+               buffer = malloc(sizeof(char) *1);
+               count++;
+            }
+            else if (count==2)
+            {
+               hash = malloc(strlen(buffer));
+               strcpy(hash,buffer);
+               memmove(hash, hash+1, strlen(hash));
+               //printf("hash: %s\n", hash);
+               buffer = malloc(sizeof(char) *1);
+               count++;
+            }
+            //printf("Count: %d\n", count);
+            
+            //buffer = (char*)malloc(sizeof(char)*1);
+            
+        }
+        if (serverManifest[i]=='\n')
+        {
+            File* tempNode = createFileNode(version, filePath, hash);     
+            insertFileNode(&sHead, tempNode);
+            count = 0;
+            i++;
+        }
+        else
+        {
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = serverManifest[i];
+            buffer[len+1] = '\0'; 
+            
+            i++;
+        }
+        
+    }
+    //server->fileHead = sHead;
+    count = 0;
+    while (sHead != NULL && count < 3)
+    {
+        printf("Count: %d\n", count);
+        count++;
+        printf("%d\t",sHead->version);
+        printf("%s\t",sHead->filePath);
+        printf("%s\n",sHead->hash);
+        sHead = sHead->next;
+    }
+
+
+
+
+
+
+
+
+    Manifest* client;
+    File* cHead;
+
+    char path[strlen(projectName)+5+strlen(".Manifest")];
+        strcpy(path,projectName);
+        strcat(path,"/");
+        strcat(path,".Manifest");
+
+    char* clientBuffer = readInFile(path);
+    printf("ClientBuffer: \n%s", clientBuffer);
+    
+    i=0;
+    buffer = (char*)malloc(sizeof(char)*1);
+    while (serverManifest[i]!='\n'){
+        int len = strlen(buffer);
+        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+        buffer[len] = serverManifest[i];
+        buffer[len+1] = '\0';
+        i++;
+    }
+    i++;
+    
+    //server->ProjectVersion = atoi(buffer);
+   // printf("version: %d\n", server->ProjectVersion);
+    printf("i: %d\n", i);
+    count = 0;
+    version;
+    //char*filePath;
+    //char*hash;
+    buffer = (char*)malloc(sizeof(char)*1);
+    while (i<strlen(clientBuffer))
+    {
+        //printf("Char Check: %c\n", serverManifest[i]);
+        if (clientBuffer[i]==' '){
+            
+            if (count==0)
+            {
+                 version = atoi(buffer);
+                 //printf("version check: %d\n", version);
+                 buffer = malloc(sizeof(char) *1);
+                 count++;
+            }
+            else if (count==1)
+            {
+               filePath = malloc(strlen(buffer));
+               strcpy(filePath,buffer);
+               memmove(filePath, filePath+1, strlen(filePath));
+               //mem move gets ride of extra space at the beginning 
+               //printf("FilePath: %s\n", filePath);
+               buffer = malloc(sizeof(char) *1);
+               count++;
+            }
+            else if (count==2)
+            {
+               hash = malloc(strlen(buffer));
+               strcpy(hash,buffer);
+               memmove(hash, hash+1, strlen(hash));
+               //printf("hash: %s\n", hash);
+               buffer = malloc(sizeof(char) *1);
+               count++;
+            }
+            //printf("Count: %d\n", count);
+            
+            //buffer = (char*)malloc(sizeof(char)*1);
+            
+        }
+        if (clientBuffer[i]=='\n')
+        {
+            File* tempNode = createFileNode(version, filePath, hash);     
+            insertFileNode(&cHead, tempNode);
+            count = 0;
+            i++;
+        }
+        else
+        {
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = clientBuffer[i];
+            buffer[len+1] = '\0'; 
+            
+            i++;
+        }
+        
+    }
+
+    count = 0;
+    while (cHead != NULL && count < 3)
+    {
+        printf("Count: %d\n", count);
+        count++;
+        printf("%d\t",cHead->version);
+        printf("%s\t",cHead->filePath);
+        printf("%s\n",cHead->hash);
+        cHead = cHead->next;
+    }
+    
+    close(socket);
+    
+    return;
+}
 
 void insertFileNode(File **head, File *newNode)
 {
@@ -198,7 +429,7 @@ void setTimeout(int milliseconds)
                          int fd = open(manifestPath,O_RDWR|O_APPEND);
                      
                          if (fd!=-1){
-                             write(fd,&nL,1);
+                             //write(fd,&nL,1);
                              write(fd,&x,1);
                              write(fd,&sp,1);
                              write(fd,projectName,strlen(projectName));
@@ -252,9 +483,9 @@ void create(int socket, char* projectName){
    
    int filedescriptor = open(fileName, O_RDWR | O_APPEND | O_CREAT,0777); 
 
-   char* fileContents = malloc(sizeof(char) * 100);
+   char* fileContents = malloc(sizeof(char) * 2);
 
-   recieve = recv(socket,fileContents,100,0);
+   recieve = recv(socket,fileContents,2,0);
 
    if (recieve > 0)
    {
@@ -268,9 +499,6 @@ void create(int socket, char* projectName){
    write(filedescriptor, fileContents, strlen(fileContents));
    
 close(filedescriptor);
-
-   
-
 }
 
 void checkout(char*projectName){
@@ -511,8 +739,10 @@ int main(int argc, char **argv)
             printf("Reply: %s\n", reply);
             destroy(socket, argv[2]);  
         }
+        
         if (strcmp(argv[1],"add")==0)
         {
+<<<<<<< HEAD
            // add(argv[2],argv[3]);
         }
         if (strcmp(argv[1],"commit")==0){
@@ -525,6 +755,21 @@ int main(int argc, char **argv)
             recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
             commit(argv[2],socket);
+=======
+            int socket =  connectToServer();
+            add(argv[2],argv[3]);
+            close(socket);
+        }
+        
+        if (strcmp(argv[1],"commit")==0){
+            int socket =  connectToServer();
+            char command[6] = "commit";
+            send(socket,command,6,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket, reply, 2000, 0);
+            printf("Reply: %s\n", reply);
+            commit(argv[2], socket);  
+>>>>>>> 29752937337c8607694324a50baf62c7ec698752
         }
 
        
