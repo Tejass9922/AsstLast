@@ -390,9 +390,9 @@ void create(int socket, char* projectName){
    
    int filedescriptor = open(fileName, O_RDWR | O_APPEND | O_CREAT,0777); 
 
-   char* fileContents = malloc(sizeof(char) * 100);
+   char* fileContents = malloc(sizeof(char) * 2);
 
-   recieve = recv(socket,fileContents,100,0);
+   recieve = recv(socket,fileContents,2,0);
 
    if (recieve > 0)
    {
