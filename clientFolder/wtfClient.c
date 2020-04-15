@@ -93,6 +93,7 @@ void commit(char* projectName, int socket){
     char*filePath;
     char*hash;
     buffer = (char*)malloc(sizeof(char)*1);
+    int SNodeLength = 0;
     while (i<strlen(serverManifest))
     {
         //printf("Char Check: %c\n", serverManifest[i]);
@@ -133,6 +134,7 @@ void commit(char* projectName, int socket){
         {
             File* tempNode = createFileNode(version, filePath, hash);     
             insertFileNode(&sHead, tempNode);
+            SNodeLength++;
             count = 0;
             i++;
         }
@@ -149,7 +151,7 @@ void commit(char* projectName, int socket){
     }
     //server->fileHead = sHead;
     count = 0;
-    while (sHead != NULL && count < 3)
+    while (sHead != NULL && count < SNodeLength)
     {
         printf("Count: %d\n", count);
         count++;
@@ -195,6 +197,7 @@ void commit(char* projectName, int socket){
     version;
     //char*filePath;
     //char*hash;
+    int cNodeLength = 0;
     buffer = (char*)malloc(sizeof(char)*1);
     while (i<strlen(clientBuffer))
     {
@@ -236,6 +239,7 @@ void commit(char* projectName, int socket){
         {
             File* tempNode = createFileNode(version, filePath, hash);     
             insertFileNode(&cHead, tempNode);
+            cNodeLength++;
             count = 0;
             i++;
         }
@@ -252,7 +256,7 @@ void commit(char* projectName, int socket){
     }
 
     count = 0;
-    while (cHead != NULL && count < 3)
+    while (cHead != NULL && count < cNodeLength)
     {
         printf("Count: %d\n", count);
         count++;
@@ -303,9 +307,11 @@ void add(char*projectName, char*fileName)
             strcat(path,fileName);
            
             int fd1 = open(path,O_RDONLY);
-           
-             char hash[SHA_DIGEST_LENGTH];
-              char hexHash[SHA_DIGEST_LENGTH];
+            
+            char hash[SHA_DIGEST_LENGTH];
+            char hexHash[SHA_DIGEST_LENGTH];
+            printf("shaLength: %d\n", SHA_DIGEST_LENGTH);
+            /*
             if (fd1!=-1){
                 int status;
                 char c;
@@ -319,13 +325,37 @@ void add(char*projectName, char*fileName)
                     buffer[len] = c;
                     buffer[len+1] = '\0'; 
                 }while(status>0); 
-                SHA(buffer, strlen(buffer), hash);
-             
+            }
+            */
+
+            char* buffer = readInFile(path);
+            SHA1(buffer, strlen(buffer), hash);
+            /*
+            int i = 0;
+            while (i < 20)
+            {
+                printf("%02x",hash[i]);
+                i++;
+            }
+            printf("\n");
+            */
+            
+            char test[40];
+            int j = 0;
+            while(j < 20)
+            {
+                sprintf((char*)&(test[j * 2]), "%02x", hash[j]);
+                j++;
+            }
+            printf("testBuffer: %s\n", test);
+            
+            
+            
            
-            sprintf(hexHash,"%x",hash);
+            //sprintf(hexHash,"%x",hash);
            
                
-            }
+            
             int len = strlen(projectName);
             char sp  = ' '; //subject to change if we have files and/dirs with spaces in them
             
@@ -345,7 +375,8 @@ void add(char*projectName, char*fileName)
                              write(fd,&sp,1);
                              write(fd,path,strlen(path));
                              write(fd,&sp,1);
-                             write(fd,hexHash,strlen(hexHash));
+                             write(fd,test,strlen(test));
+                             printf("length: %d\n", strlen(test));
                              write(fd,&sp,1); 
                             write(fd,&nL,1);
                          }
