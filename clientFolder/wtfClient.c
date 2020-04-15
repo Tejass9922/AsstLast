@@ -94,13 +94,13 @@ void commit(char* projectName, int socket){
     buffer = (char*)malloc(sizeof(char)*1);
     while (i<strlen(serverManifest))
     {
-        printf("Char Check: %c\n", serverManifest[i]);
+        //printf("Char Check: %c\n", serverManifest[i]);
         if (serverManifest[i]==' '){
             
             if (count==0)
             {
                  version = atoi(buffer);
-                 printf("version check: %d\n", version);
+                 //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
                  count++;
             }
@@ -108,7 +108,7 @@ void commit(char* projectName, int socket){
             {
                filePath = malloc(strlen(buffer));
                strcpy(filePath,buffer);
-               printf("FilePath: %s\n", filePath);
+               //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
                count++;
             }
@@ -116,11 +116,11 @@ void commit(char* projectName, int socket){
             {
                hash = malloc(strlen(buffer));
                strcpy(hash,buffer);
-               printf("hash: %s\n", hash);
+               //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
                count++;
             }
-            printf("Count: %d\n", count);
+            //printf("Count: %d\n", count);
             
             //buffer = (char*)malloc(sizeof(char)*1);
             
@@ -128,10 +128,12 @@ void commit(char* projectName, int socket){
         if (serverManifest[i]=='\n')
         {
             File* tempNode = createFileNode(version, filePath, hash);
-            printf("%d\t",tempNode->version);
-            printf("%s\t",tempNode->filePath);
-            printf("%s\n",sHead->hash);
+            printf("%d\n",tempNode->version);
+            printf("%s\n",tempNode->filePath);
+            printf("%s\n",tempNode->hash);
             insertFileNode(&sHead, tempNode);
+            count = 0;
+            i++;
         }
         else
         {
