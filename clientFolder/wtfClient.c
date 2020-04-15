@@ -11,9 +11,10 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include<time.h>
+#include <time.h>
 #include <openssl/sha.h>
 #include <dirent.h>
+#include <openssl/err.h>
 
 char* readInFile(char* fileName);
 typedef struct File{
@@ -280,7 +281,7 @@ void setTimeout(int milliseconds)
         milliseconds_since = clock() * 1000 / CLOCKS_PER_SEC;
     } while (milliseconds_since <= end);
 }
-/*
+
 void add(char*projectName, char*fileName)
 {
        
@@ -335,7 +336,7 @@ void add(char*projectName, char*fileName)
                          int fd = open(manifestPath,O_RDWR|O_APPEND);
                      
                          if (fd!=-1){
-                             write(fd,&nL,1);
+                             //write(fd,&nL,1);
                              write(fd,&x,1);
                              write(fd,&sp,1);
                              write(fd,projectName,strlen(projectName));
@@ -351,7 +352,7 @@ void add(char*projectName, char*fileName)
         }
 
 }
-*/
+
 void destroy(int socket, char* projectName)
 {
     char* returnMessage = malloc (sizeof(char) * 50);
@@ -645,12 +646,14 @@ int main(int argc, char **argv)
             printf("Reply: %s\n", reply);
             destroy(socket, argv[2]);  
         }
-        /*
+        
         if (strcmp(argv[1],"add")==0)
         {
+            int socket =  connectToServer();
             add(argv[2],argv[3]);
+            close(socket);
         }
-        */
+        
         if (strcmp(argv[1],"commit")==0){
             int socket =  connectToServer();
             char command[6] = "commit";

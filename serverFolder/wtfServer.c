@@ -169,7 +169,7 @@ void createProject(int sock){
         printf("file Path: %s\n",filePath);
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
-        write(filedescriptor, "1", 1);
+        write(filedescriptor, "1\n", 2);
         close(filedescriptor);
 
         char* response = malloc(sizeof(char) * 100);
