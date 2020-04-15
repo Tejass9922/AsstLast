@@ -39,7 +39,7 @@ void commit(int socket){
             int length = strlen(buffer);
             char size[10];
             sprintf(size,"%d",length);
-            send(socket,size,1,0);
+            send(socket,size,10,0);
             char temp[8];
             recv(socket,temp,8,0);
             send(socket,buffer,length,0);
