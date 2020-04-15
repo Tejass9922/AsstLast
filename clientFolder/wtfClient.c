@@ -35,13 +35,14 @@ typedef struct ConfigureInfo{
 }ConfigureInfo;
 
 ConfigureInfo info;
-void insertFileNode(File **head, File *newNode)
+
+void insertFileNode(File **head, File *newNode)
 {
     newNode->next = *head;
     *head = newNode;
 }
 
-File* createFileNode(int version, char* filePath, char* hash)
+File* createFileNode(int version, char* filePath, char* hash)
 {
     struct File* temp = (struct File*)malloc(sizeof(File));
     temp->filePath = filePath;
@@ -77,7 +78,7 @@ void commit(char* projectName, int socket){
     char*buffer = (char*)malloc(sizeof(char)*1);
     while (serverManifest[i]!='\n'){
         int len = strlen(buffer);
-        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
         buffer[len] = serverManifest[i];
         buffer[len+1] = '\0';
         i++;
