@@ -66,7 +66,7 @@ void commit(char* projectName, int socket){
     send(socket,"Got Size", 8 ,0);
     char*serverManifest =(char*)(malloc(sizeof(char)*size));
     recv(socket,serverManifest,size,0);
-    printf("check:\n%s\n",serverManifest);
+    printf("check: %s\n",serverManifest);
 
    
     Manifest* server;
@@ -85,7 +85,8 @@ void commit(char* projectName, int socket){
     
     //server->ProjectVersion = atoi(buffer);
    // printf("version: %d\n", server->ProjectVersion);
-    printf("i: %d\n", i);
+    int temp = atoi(buffer);
+    printf("version check: %d\n", temp);
     int count = 0;
     int version;
     char*filePath;
@@ -173,6 +174,7 @@ void commit(char* projectName, int socket){
         strcat(path,".Manifest");
 
     char* clientBuffer = readInFile(path);
+    printf("ClientBuffer: \n%s", clientBuffer);
     
     i=0;
     buffer = (char*)malloc(sizeof(char)*1);
