@@ -267,98 +267,6 @@ void commit(char* projectName, int socket){
     return;
 }
 
-void insertFileNode(File **head, File *newNode)
-{
-    newNode->next = *head;
-    *head = newNode;
-}
-
-File* createFileNode(int version, char* filePath, char* hash)
-{
-	struct File* temp = (struct File*)malloc(sizeof(File));
-    temp->filePath = filePath;
-    temp->version = version;
-    temp->hash = hash;
-	return temp;
-}
-
-
-
-void commit(char* projectName, int socket){
-
-    int len = strlen(projectName)+1;
-    send(socket,projectName,len,0);
-
-    char* recieveSize = malloc (sizeof(char) * 10);
-
-    recv(socket, recieveSize, 10, 0);
-    int size = atoi(recieveSize);
-    printf("Recieve size: %s\n", recieveSize);
-    printf("Size of Server Manifest: %d\n",size);
-    send(socket,"Got Size", 8 ,0);
-    char*serverManifest =(char*)(malloc(sizeof(char)*size));
-    recv(socket,serverManifest,size,0);
-    printf("%s\n",serverManifest);
-
-    Manifest client;
-    Manifest server;
-    File* cHead;
-    File* sHead;
-
-   int i=0;
-    char*buffer = (char*)malloc(sizeof(char)*1);
-    while (serverManifest[i]!='\n'){
-        int len = strlen(buffer);
-        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-        buffer[len] = serverManifest[i];
-        buffer[len+1] = '\0';
-        i++;
-    }
-    server.ProjectVersion = atoi(buffer);
-    int count = 0;
-    int version;
-    char*filePath;
-    char*hash;
-    while (i<strlen(serverManifest))
-    {
-        if (serverManifest[i]==' '){
-            if (count==0)
-            {
-                 version = atoi(buffer);
-            }
-            else if (count==1)
-            {
-              filePath = malloc(strlen(buffer));
-               strcpy(filePath,buffer);
-            }
-            else if (count==2)
-            {
-               hash = malloc(strlen(buffer));
-               strcpy(filePath,buffer);
-            }
-            count++;
-            buffer = (char*)malloc(sizeof(char)*1);
-        }
-        if (serverManifest[i]=='\n')
-        {
-            File* tempNode = createFileNode(version, filePath, hash);
-            insertFileNode(&sHead, tempNode);
-        }
-        else
-        {
-            int len = strlen(buffer);
-            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-            buffer[len] = serverManifest[i];
-            buffer[len+1] = '\0'; 
-            count = 0;
-        }
-        
-    }
-    server.fileHead = sHead;
-    printf("%d\t",sHead->version);
-    printf("%s\t",sHead->filePath);
-    printf("%s\n",sHead->hash);
-}
 
 void setTimeout(int milliseconds)
 {
@@ -374,10 +282,9 @@ void setTimeout(int milliseconds)
     } while (milliseconds_since <= end);
 }
 
-/*void add(char*projectName, char*fileName)
+void add(char*projectName, char*fileName)
 {
-       //compute full file path somehow?
-
+       
         char nL = '\n';
         char x =  1+'0';
         int i = -1;
@@ -398,6 +305,7 @@ void setTimeout(int milliseconds)
             int fd1 = open(path,O_RDONLY);
            
              char hash[SHA_DIGEST_LENGTH];
+              char hexHash[SHA_DIGEST_LENGTH];
             if (fd1!=-1){
                 int status;
                 char c;
@@ -411,7 +319,11 @@ void setTimeout(int milliseconds)
                     buffer[len] = c;
                     buffer[len+1] = '\0'; 
                 }while(status>0); 
-                SHA1(buffer, strlen(buffer), hash);
+                SHA(buffer, strlen(buffer), hash);
+             
+           
+            sprintf(hexHash,"%x",hash);
+           
                
             }
             int len = strlen(projectName);
@@ -429,14 +341,13 @@ void setTimeout(int milliseconds)
                          int fd = open(manifestPath,O_RDWR|O_APPEND);
                      
                          if (fd!=-1){
-                             //write(fd,&nL,1);
                              write(fd,&x,1);
                              write(fd,&sp,1);
-                             write(fd,projectName,strlen(projectName));
+                             write(fd,path,strlen(path));
                              write(fd,&sp,1);
-                             write(fd,fileName,strlen(fileName));
-                             write(fd,&sp,1);
-                             write(fd,hash,strlen(hash));
+                             write(fd,hexHash,strlen(hexHash));
+                             write(fd,&sp,1); 
+                            write(fd,&nL,1);
                          }
                      }
                 }
@@ -444,7 +355,7 @@ void setTimeout(int milliseconds)
                
         }
 
-}*/
+}
 
 void destroy(int socket, char* projectName)
 {
@@ -680,9 +591,9 @@ int connectToServer(){
         servaddr.sin_addr.s_addr = inet_addr(info.IP);
         int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
         while (cx==-1){
-            printf("trying to reconnect\n");
-            setTimeout(3000);
-            cx = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
+        printf("trying to reconnect\n");
+        setTimeout(3000);
+        cx = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
         }
 
         return sockfd;
@@ -742,23 +653,8 @@ int main(int argc, char **argv)
         
         if (strcmp(argv[1],"add")==0)
         {
-<<<<<<< HEAD
-           // add(argv[2],argv[3]);
-        }
-        if (strcmp(argv[1],"commit")==0){
-              printf("%d\n",socket);
-            int socket =  connectToServer();
-          
-            char command[7] = "commit";
-            send(socket,command,7,0);
-            char* reply = malloc(50* sizeof(char));
-            recv(socket, reply, 2000, 0);
-            printf("Reply: %s\n", reply);
-            commit(argv[2],socket);
-=======
-            int socket =  connectToServer();
             add(argv[2],argv[3]);
-            close(socket);
+          
         }
         
         if (strcmp(argv[1],"commit")==0){
@@ -769,7 +665,6 @@ int main(int argc, char **argv)
             recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
             commit(argv[2], socket);  
->>>>>>> 29752937337c8607694324a50baf62c7ec698752
         }
 
        

@@ -1,4 +1,4 @@
-#include<pthread.h> 
+#include<pthread.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <stdbool.h> 
@@ -12,52 +12,13 @@
 #include <string.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include<time.h>
+#include <time.h>
 #include <openssl/sha.h>
 #include <dirent.h>
-
-char* readInFile(char* fileName);
-void commit(int socket){
-    
-    char*projectName = (char*)(malloc(sizeof(char)*100));
-    int readSize = recv(socket, projectName, 100, 0);
-    if (readSize > 0)
-    {
-        printf("Got requested path\n");
-    }
-
-     char path[strlen(projectName)+5+strlen(".Manifest")];
-            strcpy(path,projectName);
-            strcat(path,"/");
-            strcat(path,".Manifest");
+#include <openssl/err.h>
 
 
 
-    DIR *dr = opendir(projectName); 
-        if (dr == NULL)  
-        { 
-            printf("Project does not Exist" );
-            return;
-            
-        } 
-        else
-        {
-            char*buffer = readInFile(path);
-            int length = strlen(buffer);
-            printf("Buffer Length: %d\n", length);
-            char size[10];
-            sprintf(size,"%d",length);
-            send(socket,size,10,0);
-            char temp[8];
-            recv(socket,temp,8,0);
-            send(socket,buffer,length,0);
-
-        }
-        
-        
-
-<<<<<<< HEAD
-=======
 char* readInFile(char* fileName);
 void commit(int socket){
     
@@ -97,7 +58,6 @@ void commit(int socket){
         
         
 
->>>>>>> 29752937337c8607694324a50baf62c7ec698752
 }
 int returnFiles(int sock)
 {
