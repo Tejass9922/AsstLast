@@ -35,22 +35,13 @@ typedef struct ConfigureInfo{
 }ConfigureInfo;
 
 ConfigureInfo info;
-<<<<<<< HEAD
-
-void insertFileNode(File **head, File *newNode)
-=======
 void insertFileNode(File **head, File *newNode)
->>>>>>> a2cb4a85e3826f3e4740fc77ef99a8c9128ce8b4
 {
     newNode->next = *head;
     *head = newNode;
 }
 
-<<<<<<< HEAD
-File* createFileNode(int version, char* filePath, char* hash)
-=======
 File* createFileNode(int version, char* filePath, char* hash)
->>>>>>> a2cb4a85e3826f3e4740fc77ef99a8c9128ce8b4
 {
     struct File* temp = (struct File*)malloc(sizeof(File));
     temp->filePath = filePath;
@@ -61,82 +52,6 @@ File* createFileNode(int version, char* filePath, char* hash)
 
 
 
-<<<<<<< HEAD
-void commit(char* projectName, int socket){
-
-    int len = strlen(projectName)+1;
-    send(socket,projectName,len,0);
-
-    char* recieveSize = malloc (sizeof(char) * 10);
-
-    recv(socket, recieveSize, 10, 0);
-    int size = atoi(recieveSize);
-    printf("Recieve size: %s\n", recieveSize);
-    printf("Size of Server Manifest: %d\n",size);
-    send(socket,"Got Size", 8 ,0);
-    char*serverManifest =(char*)(malloc(sizeof(char)*size));
-    recv(socket,serverManifest,size,0);
-    printf("%s\n",serverManifest);
-
-    Manifest client;
-    Manifest server;
-    File* cHead;
-    File* sHead;
-
-   int i=0;
-    char*buffer = (char*)malloc(sizeof(char)*1);
-    while (serverManifest[i]!='\n'){
-        int len = strlen(buffer);
-        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-        buffer[len] = serverManifest[i];
-        buffer[len+1] = '\0';
-        i++;
-    }
-    server.ProjectVersion = atoi(buffer);
-    int count = 0;
-    int version;
-    char*filePath;
-    char*hash;
-    while (i<strlen(serverManifest))
-    {
-        if (serverManifest[i]==' '){
-            if (count==0)
-            {
-                 version = atoi(buffer);
-            }
-            else if (count==1)
-            {
-              filePath = malloc(strlen(buffer));
-               strcpy(filePath,buffer);
-            }
-            else if (count==2)
-            {
-               hash = malloc(strlen(buffer));
-               strcpy(filePath,buffer);
-            }
-            count++;
-            buffer = (char*)malloc(sizeof(char)*1);
-        }
-        if (serverManifest[i]=='\n')
-        {
-            File* tempNode = createFileNode(version, filePath, hash);
-            insertFileNode(&sHead, tempNode);
-        }
-        else
-        {
-            int len = strlen(buffer);
-            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-            buffer[len] = serverManifest[i];
-            buffer[len+1] = '\0'; 
-            count = 0;
-        }
-        
-    }
-    server.fileHead = sHead;
-    printf("%d\t",sHead->version);
-    printf("%s\t",sHead->filePath);
-    printf("%s\n",sHead->hash);
-=======
 void commit(char* projectName, int socket){
 
     int len = strlen(projectName)+1;
@@ -211,7 +126,6 @@ void commit(char* projectName, int socket){
     printf("%d\t",sHead->version);
     printf("%s\t",sHead->filePath);
     printf("%s\n",sHead->hash);
->>>>>>> a2cb4a85e3826f3e4740fc77ef99a8c9128ce8b4
 }
 
 
