@@ -59,7 +59,7 @@ void commit(int socket){
 
             char commitFileSize[10];
             recv(socket, commitFileSize, 10, 0); //gets size of file as a char*
-
+            
             int commitSize = atoi(commitFileSize); //converts char* into an integer 
 
             char* clientCommitFile = (char*)(malloc(sizeof(char)*commitSize));
