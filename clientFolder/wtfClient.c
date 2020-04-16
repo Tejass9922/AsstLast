@@ -221,30 +221,26 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
         }
 
-      
- 
-     
-printf("%s\n",commitFileName);
 
         close(commitFD);
-        char*tempCommit = readInFile("projectTest/test2.txt");
-        printf("%s\n",tempCommit);
-        char* commitBuffer = (char*)(malloc(sizeof(char)*strlen(tempCommit)));
+
+        char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
         
-        printf("reached here2\n");
         commitBuffer = readInFile(commitFileName); //gets commit file size
         int commitSize = strlen(commitBuffer);
+        //printf("%s\n",commitBuffer);
 
         int length = commitSize;
         char size[10];
         sprintf(size,"%d",commitSize);
              //converts the size into a char* to send over to the server
-        send(socket,size,10,0); //sends size of file
+       
+        send(socket, size ,strlen(size), 0); //sends size of file
 
         char temp[8];
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
-        send(socket,commitBuffer ,commitSize,0); //sends the commit buffer using the size of it stores in size 
+        send(socket,commitBuffer ,commitSize, 0); //sends the commit buffer using the size of it stores in size 
 
        
 }
@@ -482,7 +478,7 @@ void commit(char* projectName, int socket){
     server.fileHead = sHead;
     //printf("Project Version: %d\n", server.ProjectVersion);
     
-    close(socket);
+
     
     
 
