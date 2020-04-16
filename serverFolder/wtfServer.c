@@ -45,9 +45,12 @@ void commit(int socket){
         } 
         else
         {
-            char*buffer = readInFile(path);
+            char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
+            buffer = readInFile(path);
+            printf("Server Buffer: %s\n", buffer);
             int length = strlen(buffer);
             char size[10];
+            printf("length: %d\n", length);
             sprintf(size,"%d",length);
             send(socket,size,10,0);
             char temp[8];
@@ -115,7 +118,7 @@ char* readInFile(char* fileName)
     char c;
     int fd = open(fileName,O_RDWR);
     int status;
-
+    if (fd!=-1){
     do{
    
             status =  read(fd, &c, 1); 
@@ -129,9 +132,9 @@ char* readInFile(char* fileName)
                 buffer[len+1] = '\0';    
             }
         }while(status >0);
-    close(fd);
     return buffer; 
-
+    }
+    printf("Cannot open the file");
 }
 
 

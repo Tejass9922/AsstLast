@@ -58,6 +58,118 @@ File* createFileNode(int version, char* filePath, char* hash)
 }
 
 
+char* computeHash(char* path)
+{
+    char hash[SHA_DIGEST_LENGTH];
+    char* buffer = readInFile(path);
+    SHA1(buffer, strlen(buffer), hash);
+    char* test = malloc(sizeof(char) * 40);
+    int j = 0;
+    while(j < 20)
+    {
+        sprintf((char*)&(test[j * 2]), "%02x", hash[j]);
+        j++;
+    }
+    return test;
+
+}
+
+void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLength, char* projectName)
+{
+        printf("ClientV = %d\n", client.ProjectVersion);
+        printf("serverV = %d\n", server.ProjectVersion);
+        if (client.ProjectVersion != server.ProjectVersion)
+        {
+            printf("Update Local Project\n");
+            return;
+        }
+
+        File* cheadTemp = client.fileHead;
+        File* sheadTemp = server.fileHead;
+        File* cheadTemp2 = client.fileHead;
+        File* sheadTemp2 = server.fileHead;
+
+        char* commitFileName = malloc((strlen(projectName) + 8) * sizeof(char));
+        strcpy(commitFileName, projectName);
+        char commiteExt[8] = "/.Commit";
+        strcat(commitFileName, commiteExt);
+        int addCheck = 0;
+        int count1 = 0;
+        while(cheadTemp != NULL && count1 < cNodeLength)//iterates thrr client nodes 
+        {
+            int count2 = 0;
+            while (sheadTemp != NULL && count2 < sNodeLength)//iterates thru sever nodes 
+            {
+                printf("reached here \n");
+                if (strcmp(cheadTemp->filePath, sheadTemp->filePath) == 0)//compares client file name server file name
+                {
+                    if (strcmp(cheadTemp->hash, sheadTemp->hash) == 0)//compares client hash and server hash if file names are equal 
+                    {
+                        char* liveHash = malloc(sizeof(char) * 40);
+                        liveHash = computeHash(cheadTemp->filePath);
+
+                        if (strcmp(liveHash, cheadTemp->hash) == 0)//if file and hash are equal, checks live hash vs client hash 
+                        {
+                            printf("equal match for: file"); //if everything is the same
+                            
+                        }         
+                        else
+                        {
+                          //modify code
+                          printf("Modify code\n"); //if livehash is not the same as client hash 
+                        }
+                    }  
+                    else if  (! (sheadTemp->version < cheadTemp->version )) //if file paths are the same, hashes are different
+                    {
+                        printf("synch projects first");
+                        //int status;
+                        //status = remove(commitFileName);
+                        //delete .commit file if it exists
+                    }
+            
+                    else{
+                        continue;
+                    } 
+                addCheck = 1; 
+                }  
+                sheadTemp = sheadTemp->next;
+                count2++;
+            }
+            if (addCheck != 1)
+            {
+                //add cHeadfile to the .commit
+            }
+            
+
+            count1++;
+        }
+
+        addCheck = 0;
+        count1 = 0;
+        while (sheadTemp2 != NULL && count1 < sNodeLength)//iterates thru server nodes 
+        {
+            int count2 = 0;
+            while (cheadTemp2 != NULL && count2 < cNodeLength)//iterates thru client nodes 
+            {
+                if (strcmp(cheadTemp->filePath, sheadTemp->filePath) == 0) //check server name and client name 
+                {
+                    addCheck = 1;
+                }
+                count2++;
+            }
+            count1++;
+            if (addCheck != 1)
+            {
+                printf("delete node\n");//add "delete" info to commit for sheadTemp 
+            }
+
+        }
+
+}
+
+
+
+
 
 void commit(char* projectName, int socket){
 
@@ -73,10 +185,10 @@ void commit(char* projectName, int socket){
     send(socket,"Got Size", 8 ,0);
     char*serverManifest =(char*)(malloc(sizeof(char)*size));
     recv(socket,serverManifest,size,0);
-    printf("check: %s\n",serverManifest);
+    printf("check:\n%s\n",serverManifest);
 
    
-    Manifest* server;
+    Manifest server;
     File* sHead;
 
    int i=0;
@@ -89,8 +201,10 @@ void commit(char* projectName, int socket){
         i++;
     }
     i++;
+
+
     
-    //server->ProjectVersion = atoi(buffer);
+    server.ProjectVersion = atoi(buffer);
    // printf("version: %d\n", server->ProjectVersion);
     int temp = atoi(buffer);
     printf("version check: %d\n", temp);
@@ -157,15 +271,18 @@ void commit(char* projectName, int socket){
     }
     //server->fileHead = sHead;
     count = 0;
-    while (sHead != NULL && count < SNodeLength)
+    File* tempShead = sHead;
+    /*
+    while (tempShead != NULL && count < SNodeLength)
     {
         printf("Count: %d\n", count);
         count++;
-        printf("%d\t",sHead->version);
-        printf("%s\t",sHead->filePath);
-        printf("%s\n",sHead->hash);
-        sHead = sHead->next;
+        printf("%d\t",tempShead->version);
+        printf("%s\t",tempShead->filePath);
+        printf("%s\n",tempShead->hash);
+        tempShead = tempShead->next;
     }
+    */
 
 
 
@@ -174,7 +291,7 @@ void commit(char* projectName, int socket){
 
 
 
-    Manifest* client;
+    Manifest client;
     File* cHead;
 
     char path[strlen(projectName)+5+strlen(".Manifest")];
@@ -183,20 +300,21 @@ void commit(char* projectName, int socket){
         strcat(path,".Manifest");
 
     char* clientBuffer = readInFile(path);
+    printf("Client Length: %d\n", strlen(clientBuffer));
     printf("ClientBuffer: \n%s", clientBuffer);
     
     i=0;
     buffer = (char*)malloc(sizeof(char)*1);
-    while (serverManifest[i]!='\n'){
+    while (clientBuffer[i]!='\n'){
         int len = strlen(buffer);
         buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-        buffer[len] = serverManifest[i];
+        buffer[len] = clientBuffer[i];
         buffer[len+1] = '\0';
         i++;
     }
     i++;
     
-    //server->ProjectVersion = atoi(buffer);
+    client.ProjectVersion = atoi(buffer);
    // printf("version: %d\n", server->ProjectVersion);
     printf("i: %d\n", i);
     count = 0;
@@ -262,19 +380,30 @@ void commit(char* projectName, int socket){
     }
 
     count = 0;
-    while (cHead != NULL && count < cNodeLength)
+    File*tempChead = cHead;
+    /*
+    while (tempChead != NULL && count < cNodeLength)
     {
         printf("Count: %d\n", count);
         count++;
-        printf("%d\t",cHead->version);
-        printf("%s\t",cHead->filePath);
-        printf("%s\n",cHead->hash);
-        cHead = cHead->next;
+        printf("%d\t",tempChead->version);
+        printf("%s\t",tempChead->filePath);
+        printf("%s\n",tempChead->hash);
+        tempChead = tempChead->next;
     }
+    */
+    client.fileHead = cHead;
+    server.fileHead = sHead;
+    printf("Project Version: %d\n", server.ProjectVersion);
     
     close(socket);
     
+    
+
+    commitFile(client, cNodeLength , server, SNodeLength , projectName);
+
     return;
+   
 }
 
 
