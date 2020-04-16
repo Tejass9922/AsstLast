@@ -76,34 +76,55 @@ char* computeHash(char* path)
 
 void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLength, char* projectName)
 {
-        printf("ClientV = %d\n", client.ProjectVersion);
-        printf("serverV = %d\n", server.ProjectVersion);
+        //printf("ClientV = %d\n", client.ProjectVersion);
+        //printf("serverV = %d\n", server.ProjectVersion);
         if (client.ProjectVersion != server.ProjectVersion)
         {
             printf("Update Local Project\n");
             return;
         }
-
+        
         File* cheadTemp = client.fileHead;
         File* sheadTemp = server.fileHead;
         File* cheadTemp2 = client.fileHead;
         File* sheadTemp2 = server.fileHead;
-
+        
         char* commitFileName = malloc((strlen(projectName) + 8) * sizeof(char));
         strcpy(commitFileName, projectName);
         char commiteExt[8] = "/.Commit";
         strcat(commitFileName, commiteExt);
+
+        if ((sheadTemp==NULL) &&(cheadTemp==NULL)){
+            printf("perfect case, No commits to be made!");
+        }
+        else if ((sheadTemp==NULL) &&(cheadTemp!=NULL)){
+            while (cheadTemp!=NULL){
+                printf("A %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
+                cheadTemp = cheadTemp->next;
+            }
+        }
+        else if ((sheadTemp!=NULL) &&(cheadTemp==NULL))
+        {
+           while (sheadTemp!=NULL){
+             printf("D %d %s %s\n",sheadTemp->version,sheadTemp->filePath,cheadTemp->hash);
+            sheadTemp = sheadTemp->next;
+           }
+        }
+
+        else
+        {
+           
         int addCheck = 0;
         int count1 = 0;
-        while(cheadTemp != NULL && count1 < cNodeLength)//iterates thrr client nodes 
+        //printf("%d\t%d\n",cNodeLength,sNodeLength);
+        while(cheadTemp != NULL)//iterates thrr client nodes 
         {
             int count2 = 0;
-            while (sheadTemp != NULL && count2 < sNodeLength)//iterates thru sever nodes 
+            sheadTemp = server.fileHead;
+            while (sheadTemp != NULL)//iterates thru sever nodes 
             {
-                printf("shead: %s\ncHead: %s\n", sheadTemp->filePath, cheadTemp->filePath);
-                
                 if (strcmp(cheadTemp->filePath, sheadTemp->filePath) == 0)//compares client file name server file name
-                {   //printf("reached here \n");
+                {   
                     if (strcmp(cheadTemp->hash, sheadTemp->hash) == 0)//compares client hash and server hash if file names are equal 
                     {
                         char* liveHash = malloc(sizeof(char) * 40);
@@ -111,18 +132,20 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
                         if (strcmp(liveHash, cheadTemp->hash) == 0)//if file and hash are equal, checks live hash vs client hash 
                         {
-                            printf("equal match for: file\n"); //if everything is the same
-                            
+                            printf("equal match for: %s\n",cheadTemp->filePath);
+                           addCheck = 1; //if everything is the same
                         }         
                         else
                         {
                           //modify code
-                          printf("Modify code\n"); //if livehash is not the same as client hash 
+                          printf("M %d %s %s\n",++cheadTemp->version,cheadTemp->filePath,cheadTemp->hash); 
+                          addCheck = 1;//if livehash is not the same as client hash 
                         }
                     }  
                     else if  (! (sheadTemp->version < cheadTemp->version )) //if file paths are the same, hashes are different
                     {
-                        printf("synch projects first");
+                        printf("**Synch projects first!**\n");
+                       return;
                         //int status;
                         //status = remove(commitFileName);
                         //delete .commit file if it exists
@@ -131,15 +154,15 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                     else{
                         continue;
                     } 
-                addCheck = 1; 
+               
                 }  
+               
+                 if ((sheadTemp->next==NULL)&&(addCheck==0)){
+                   printf("A %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
+                 }
                 sheadTemp = sheadTemp->next;
-                count2++;
             }
-            if (addCheck != 1)
-            {
-                printf("add Check\n");//add cHeadfile to the .commit
-            }
+           
             cheadTemp = cheadTemp->next;
             
 
@@ -148,25 +171,25 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
         addCheck = 0;
         count1 = 0;
-        while (sheadTemp2 != NULL && count1 < sNodeLength)//iterates thru server nodes 
+        while (sheadTemp2 != NULL)
         {
             int count2 = 0;
+            cheadTemp2 = client.fileHead;
             while (cheadTemp2 != NULL && count2 < cNodeLength)//iterates thru client nodes 
             {
                 if (strcmp(cheadTemp2->filePath, sheadTemp2->filePath) == 0) //check server name and client name 
                 {
-                    printf("reachEd inside loop\n");
                     addCheck = 1;
                 }
                 count2++;
+                 if ((cheadTemp2->next==NULL)&&(addCheck==0)){
+                    printf("D %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
+                 }
                 cheadTemp2 = cheadTemp2->next;
             }
             count1++;
             sheadTemp2 = sheadTemp2->next;
-            if (addCheck != 1)
-            {
-                printf("delete node\n");//add "delete" info to commit for sheadTemp 
-            }
+        }
 
         }
 
@@ -194,7 +217,9 @@ void commit(char* projectName, int socket){
 
    
     Manifest server;
-    File* sHead;
+    Manifest client;
+    File* sHead = NULL;
+    File* cHead = NULL;
 
    int i=0;
     char*buffer = (char*)malloc(sizeof(char)*1);
@@ -257,6 +282,7 @@ void commit(char* projectName, int socket){
         }
         if (serverManifest[i]=='\n')
         {
+         //  printf("%d\t%s\t%s",version,filePath,hash);
             File* tempNode = createFileNode(version, filePath, hash);     
             insertFileNode(&sHead, tempNode);
             SNodeLength++;
@@ -277,16 +303,14 @@ void commit(char* projectName, int socket){
     //server->fileHead = sHead;
     count = 0;
     File* tempShead = sHead;
-    
-    while (tempShead != NULL)
+   // printf("\n");
+  /*  while (tempShead != NULL)
     {
-        printf("Count: %d\n", count);
-        count++;
         printf("%d\t",tempShead->version);
         printf("%s\t",tempShead->filePath);
         printf("%s\n",tempShead->hash);
         tempShead = tempShead->next;
-    }
+    }*/
     
 
 
@@ -296,8 +320,7 @@ void commit(char* projectName, int socket){
 
 
 
-    Manifest client;
-    File* cHead;
+   
 
     char path[strlen(projectName)+5+strlen(".Manifest")];
         strcpy(path,projectName);
@@ -328,6 +351,7 @@ void commit(char* projectName, int socket){
     //char*hash;
     int cNodeLength = 0;
     buffer = (char*)malloc(sizeof(char)*1);
+
     while (i<strlen(clientBuffer))
     {
         //printf("Char Check: %c\n", serverManifest[i]);
@@ -366,11 +390,12 @@ void commit(char* projectName, int socket){
         }
         if (clientBuffer[i]=='\n')
         {
+          
             File* tempNode = createFileNode(version, filePath, hash);     
             insertFileNode(&cHead, tempNode);
             cNodeLength++;
             count = 0;
-            i++;
+           
         }
         else
         {
@@ -379,24 +404,24 @@ void commit(char* projectName, int socket){
             buffer[len] = clientBuffer[i];
             buffer[len+1] = '\0'; 
             
-            i++;
+           
         }
+        i++;
         
     }
 
     count = 0;
     File* tempChead = cHead;
     
-    while (tempChead != NULL && count < cNodeLength)
+   /* while (tempChead != NULL)
     {
-        printf("Client\n");
-        printf("Count: %d\n", count);
-        count++;
+        //printf("Client\n");
         printf("%d\t",tempChead->version);
         printf("%s\t",tempChead->filePath);
         printf("%s\n",tempChead->hash);
         tempChead = tempChead->next;
-    }
+        count++;
+    }*/
     
     client.fileHead = cHead;
     server.fileHead = sHead;
@@ -406,7 +431,7 @@ void commit(char* projectName, int socket){
     
     
 
-    //commitFile(client, cNodeLength , server, SNodeLength , projectName);
+    commitFile(client, cNodeLength , server, SNodeLength , projectName);
 
     return;
    
@@ -836,9 +861,45 @@ int main(int argc, char **argv)
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 2000, 0);
             printf("Reply: %s\n", reply);
+            if (canCommit(argv[2],socket))
             commit(argv[2], socket);  
         }
 
        
         return 0;
+}
+
+bool canCommit(int socket,char*projectName){
+     struct dirent *de; 
+    DIR *dr = opendir(projectName); 
+     while ((de = readdir(dr)) != NULL) 
+     {
+        if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+        {
+            if( strcmp(de->d_name,".Conflict")==0)
+            {
+                printf("**Found a .Conflict File! Cannot Commit!**");
+                return false;
+            }
+            if (strcmp(de->d_name,".Update")==0)
+            {
+                char temp [7+strlen(projectName)+2];
+                strcpy(temp,projectName);
+                strcat(temp,"/");
+                strcat(temp,".Update");
+                int fd = open(temp,O_RDONLY);
+                if (fd==-1){
+                    return true;
+                }
+                char c;
+                int status = read(fd,&c,1);
+                if (!status<=0){
+                    return false;
+                }
+
+            }
+        }
+     }
+    return true;
+    
 }
