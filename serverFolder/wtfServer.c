@@ -57,6 +57,22 @@ void commit(int socket){
             recv(socket,temp,8,0);
             send(socket,buffer,length,0);
 
+            char commitFileSize[10];
+            recv(socket, commitFileSize, 10, 0); //gets size of file as a char*
+
+            int commitSize = atoi(commitFileSize); //converts char* into an integer 
+
+            char* clientCommitFile = (char*)(malloc(sizeof(char)*commitSize));
+
+            send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size
+
+            recv(socket,clientCommitFile,commitSize,0);//saves the commit file inside clientCommitFile
+
+            printf("Client Commit:\n%s", clientCommitFile);
+
+
+
+
         }
         
         
@@ -194,10 +210,11 @@ void createProject(int sock){
 
         printf("File Contents: %s\n", readInFile(filePath));
     //how do you know how much memory to allocate for this buffer 
-        char* fileContents = malloc(sizeof(char) * 100);
+        char* fileContents = (char*)malloc(sizeof(readInFile(filePath)));
         fileContents = readInFile(filePath);
         send(sock, fileContents, strlen(readInFile(filePath)), 0);
         closedir(dr);
+        close(check);
             
     } 
         else{
