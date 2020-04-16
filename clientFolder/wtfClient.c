@@ -17,6 +17,7 @@
 #include <openssl/err.h>
 
 
+
 char* readInFile(char* fileName);
 typedef struct File{
     int version;
@@ -38,6 +39,45 @@ typedef struct ConfigureInfo{
 }ConfigureInfo;
 
 
+bool canCommit(char* projectName, int socket){
+    struct dirent *de; 
+    DIR *dr = opendir(projectName); 
+    if (dr == NULL)
+    {
+        printf("Client does not have folder\n");
+        return false;
+    }
+     while ((de = readdir(dr)) != NULL) 
+     {
+        if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+        {
+            if( strcmp(de->d_name,".Conflict")==0)
+            {
+                printf("**Found a .Conflict File! Cannot Commit!**");
+                return false;
+            }
+            if (strcmp(de->d_name,".Update")==0)
+            {
+                char temp [7+strlen(projectName)+2];
+                strcpy(temp,projectName);
+                strcat(temp,"/");
+                strcat(temp,".Update");
+                int fd = open(temp,O_RDONLY);
+                if (fd==-1){
+                    return true;
+                }
+                char c;
+                int status = read(fd,&c,1);
+                if (!status<=0){
+                    return false;
+                }
+
+            }
+        }
+     }
+    return true;
+    
+}
 
 ConfigureInfo info;
 
@@ -94,10 +134,14 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         char commiteExt[8] = "/.Commit";
         strcat(commitFileName, commiteExt);
 
+       printf("reached Here\n");
+
         if ((sheadTemp==NULL) &&(cheadTemp==NULL)){
+
             printf("perfect case, No commits to be made!");
         }
-        else if ((sheadTemp==NULL) &&(cheadTemp!=NULL)){
+        else if ((sheadTemp==NULL) && (cheadTemp!=NULL)){
+            
             while (cheadTemp!=NULL){
                 printf("A %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
                 cheadTemp = cheadTemp->next;
@@ -106,14 +150,15 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         else if ((sheadTemp!=NULL) &&(cheadTemp==NULL))
         {
            while (sheadTemp!=NULL){
-             printf("D %d %s %s\n",sheadTemp->version,sheadTemp->filePath,cheadTemp->hash);
-            sheadTemp = sheadTemp->next;
+             printf("D %d %s %s\n",sheadTemp->version,sheadTemp->filePath,sheadTemp->hash);
+             sheadTemp = sheadTemp->next;
            }
         }
+        
 
         else
         {
-           
+       
         int addCheck = 0;
         int count1 = 0;
         //printf("%d\t%d\n",cNodeLength,sNodeLength);
@@ -123,6 +168,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
             sheadTemp = server.fileHead;
             while (sheadTemp != NULL)//iterates thru sever nodes 
             {
+               
                 if (strcmp(cheadTemp->filePath, sheadTemp->filePath) == 0)//compares client file name server file name
                 {   
                     if (strcmp(cheadTemp->hash, sheadTemp->hash) == 0)//compares client hash and server hash if file names are equal 
@@ -156,10 +202,11 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                     } 
                
                 }  
-               
-                 if ((sheadTemp->next==NULL)&&(addCheck==0)){
+                
+                if ((sheadTemp->next==NULL)&&(addCheck==0)){
                    printf("A %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
-                 }
+                }
+                addCheck = 0;
                 sheadTemp = sheadTemp->next;
             }
            
@@ -183,7 +230,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                 }
                 count2++;
                  if ((cheadTemp2->next==NULL)&&(addCheck==0)){
-                    printf("D %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
+                    printf("D %d %s %s\n",cheadTemp2->version,cheadTemp2->filePath,cheadTemp2->hash);
                  }
                 cheadTemp2 = cheadTemp2->next;
             }
@@ -205,7 +252,7 @@ void commit(char* projectName, int socket){
     send(socket,projectName,len,0);
 
     char* recieveSize = malloc (sizeof(char) * 10);
-
+    printf("reached here\n");
     recv(socket, recieveSize, 10, 0);
     int size = atoi(recieveSize);
     //printf("Recieve size: %s\n", recieveSize);
@@ -869,37 +916,3 @@ int main(int argc, char **argv)
         return 0;
 }
 
-bool canCommit(int socket,char*projectName){
-     struct dirent *de; 
-    DIR *dr = opendir(projectName); 
-     while ((de = readdir(dr)) != NULL) 
-     {
-        if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
-        {
-            if( strcmp(de->d_name,".Conflict")==0)
-            {
-                printf("**Found a .Conflict File! Cannot Commit!**");
-                return false;
-            }
-            if (strcmp(de->d_name,".Update")==0)
-            {
-                char temp [7+strlen(projectName)+2];
-                strcpy(temp,projectName);
-                strcat(temp,"/");
-                strcat(temp,".Update");
-                int fd = open(temp,O_RDONLY);
-                if (fd==-1){
-                    return true;
-                }
-                char c;
-                int status = read(fd,&c,1);
-                if (!status<=0){
-                    return false;
-                }
-
-            }
-        }
-     }
-    return true;
-    
-}

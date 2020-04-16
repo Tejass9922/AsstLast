@@ -134,6 +134,7 @@ char* readInFile(char* fileName)
         }while(status >0);
     return buffer; 
     }
+    close(fd);
     printf("Cannot open the file");
 }
 
@@ -191,13 +192,14 @@ void createProject(int sock){
         int recieve;
         recieve = recv(sock, response ,100,0);
         printf("Client Response: %s\n", response);
-
+        printf("buffer length: %d\n", strlen(readInFile(filePath)));
         printf("File Contents: %s\n", readInFile(filePath));
-    //how do you know how much memory to allocate for this buffer 
-        char* fileContents = malloc(sizeof(char) * 100);
+        //how do you know how much memory to allocate for this buffer 
+        char* fileContents = malloc(sizeof(char) * strlen(readInFile(filePath)));
         fileContents = readInFile(filePath);
-        send(sock, fileContents, strlen(readInFile(filePath)), 0);
+        send(sock, fileContents, strlen(filePath), 0);
         closedir(dr);
+        close(check);
             
     } 
         else{
