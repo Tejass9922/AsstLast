@@ -57,6 +57,22 @@ void commit(int socket){
             recv(socket,temp,8,0);
             send(socket,buffer,length,0);
 
+            char commitFileSize[10];
+            recv(socket, commitFileSize, 10, 0); //gets size of file as a char*
+
+            int commitSize = atoi(commitFileSize); //converts char* into an integer 
+
+            char* clientCommitFile = (char*)(malloc(sizeof(char)*commitSize));
+
+            send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size
+
+            recv(socket,clientCommitFile,commitSize,0);//saves the commit file inside clientCommitFile
+
+            printf("Client Commit:\n%s", clientCommitFile);
+
+
+
+
         }
         
         
@@ -134,7 +150,6 @@ char* readInFile(char* fileName)
         }while(status >0);
     return buffer; 
     }
-    close(fd);
     printf("Cannot open the file");
 }
 
@@ -192,12 +207,12 @@ void createProject(int sock){
         int recieve;
         recieve = recv(sock, response ,100,0);
         printf("Client Response: %s\n", response);
-        printf("buffer length: %d\n", strlen(readInFile(filePath)));
+
         printf("File Contents: %s\n", readInFile(filePath));
-        //how do you know how much memory to allocate for this buffer 
-        char* fileContents = malloc(sizeof(char) * strlen(readInFile(filePath)));
+    //how do you know how much memory to allocate for this buffer 
+        char* fileContents = (char*)malloc(sizeof(readInFile(filePath)));
         fileContents = readInFile(filePath);
-        send(sock, fileContents, strlen(filePath), 0);
+        send(sock, fileContents, strlen(readInFile(filePath)), 0);
         closedir(dr);
         close(check);
             
