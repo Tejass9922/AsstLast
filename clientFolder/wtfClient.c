@@ -245,9 +245,50 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
        
 }
 
+void history(char * projectName, int socket)
+{
+    int len = strlen(projectName)+1; //gets size projectName string length 
+    send(socket,projectName,len,0); //sends over project name to server 
+
+    char* recieveSize = malloc (sizeof(char) * 10);
+
+    recv(socket, recieveSize, 10, 0); //gets size of the buffer of the history file 
+    if (strcmp(recieveSize, "DNE") == 0)
+    {
+        printf("Folder does not exist\n"); //check to see if folder exists on server side, if not it stops
+        return;
+    }
+    int size = atoi(recieveSize);
+    send(socket,"Got Size", 8 ,0); //sends a confirmation that it got the size 
+    char* historyBuffer =(char*)(malloc(sizeof(char)*size));
+    recv(socket, historyBuffer ,size,0); //gets buffer containing the file
+
+    printf("History: \n%s\n", historyBuffer);
 
 
 
+}
+
+void currentVersion(char* projectName, int socket)
+{
+    int len = strlen(projectName)+1; //gets size projectName string length 
+    send(socket,projectName,len,0); //sends over project name to server 
+
+    char* recieveSize = malloc (sizeof(char) * 10);
+
+    recv(socket, recieveSize, 10, 0); //gets size of the buffer of the manifest file, which holds the current version info  
+    if (strcmp(recieveSize, "DNE") == 0)
+    {
+        printf("Folder does not exist\n"); //check to see if folder exists on server side, if not it stops
+        return;
+    }
+    int size = atoi(recieveSize);
+    send(socket,"Got Size", 8 ,0); //sends a confirmation that it got the size 
+    char* manifestVersion =(char*)(malloc(sizeof(char)*size));
+    recv(socket, manifestVersion ,size,0); //gets buffer containing the file
+
+    printf("History: \n%s\n", manifestVersion);
+}
 
 void commit(char* projectName, int socket){
 
@@ -514,6 +555,36 @@ void push(char*projectName,int socket)
        
         send(socket, size ,strlen(size), 0); //sends size of file
 
+<<<<<<< HEAD
+=======
+
+void push(char*projectName,int socket)
+{
+    int len = strlen(projectName)+1;
+    send(socket,projectName,len,0);//sends project name to server 
+    char* confirmation = malloc (sizeof(char) * 12);
+    recv(socket, confirmation, 11 ,0);
+    printf("%s\n", confirmation);
+    char commitFileName[strlen(projectName)+10];
+    strcpy(commitFileName,projectName);
+    strcat(commitFileName,"/");
+    strcat(commitFileName,".Commit");
+   int fd = open(commitFileName,O_RDWR);
+   if (fd!=-1){
+        char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
+        
+        commitBuffer = readInFile(commitFileName); //gets commit file size
+        int commitSize = strlen(commitBuffer);
+        printf("%s\n",commitBuffer);
+        
+        int length = commitSize;
+        char size[10];
+        sprintf(size,"%d",commitSize);
+             //converts the size into a char* to send over to the server
+       
+        send(socket, size ,strlen(size), 0); //sends size of file
+
+>>>>>>> fd3db57498644c3bb7b6086a990651cb68015947
         char temp[8];
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
@@ -960,7 +1031,7 @@ int main(int argc, char **argv)
             char command[6] = "create";
             send(socket,command,6,0);
             char* reply = malloc(50* sizeof(char));
-            recv(socket, reply, 2000, 0);
+            recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
             create(socket, argv[2]);  
         }
@@ -969,7 +1040,7 @@ int main(int argc, char **argv)
             char command[7] = "destroy";
             send(socket,command,7,0);
             char* reply = malloc(50* sizeof(char));
-            recv(socket, reply, 2000, 0);
+            recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
             destroy(socket, argv[2]);  
         }
@@ -985,7 +1056,7 @@ int main(int argc, char **argv)
             char command[6] = "commit";
             send(socket,command,6,0);
             char* reply = malloc(50* sizeof(char));
-            recv(socket, reply, 2000, 0);
+            recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
             if (canCommit(socket,argv[2]))
             commit(argv[2], socket);  
@@ -995,10 +1066,35 @@ int main(int argc, char **argv)
             char command[5] = "push";
             send(socket,command,5,0);
             char* reply = malloc(50* sizeof(char));
+<<<<<<< HEAD
             recv(socket,reply,2000,0);
             printf("Reply: %s\n", reply);
             push(argv[2],socket);
         }
+=======
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+            push(argv[2],socket);
+        }
+        if (strcmp(argv[1],"history")==0){
+            int socket = connectToServer();
+            char command[8] = "history";
+            send(socket,command,8,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+            history(argv[2],socket);
+        }
+        if (strcmp(argv[1],"currentVersion")==0){
+            int socket = connectToServer();
+            char command[15] = "currentVersion";
+            send(socket,command,15,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+            currentVersion(argv[2],socket);
+        }
+>>>>>>> fd3db57498644c3bb7b6086a990651cb68015947
 
        
         return 0;
