@@ -20,6 +20,48 @@
 
 
 char* readInFile(char* fileName);
+
+void history(int sock){
+
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(socket, projectName, 100, 0);//gets the name of the project
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+     char path[strlen(projectName)+5+strlen(".history")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".history");
+
+    
+
+    DIR *dr = opendir(projectName); 
+        if (dr == NULL)  
+        { 
+            printf("Project does not Exist" );
+            return;
+            
+        } 
+        else
+        {
+            char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
+            buffer = readInFile(path); //opens and store the history file into a buffer
+            printf("Server Buffer: %s\n", buffer);
+            int length = strlen(buffer);
+            char size[10];
+            printf("length: %d\n", length); //manifest 
+            sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client
+            send(socket,size,10,0); //sends the size of the buffer that it will send next 
+            char temp[8];
+            recv(socket,temp,8,0); //recieves a confirmation that the client got the size 
+            send(socket,buffer,length,0); // sends over the actual buffer containing the history file.
+
+        }
+    return;
+}
+
 void commit(int socket){
     
     char*projectName = (char*)(malloc(sizeof(char)*100));
@@ -277,6 +319,8 @@ void push(int sock)
 
 }
 
+
+
 void *server_handler (void *fd_pointer);
 
 int main(int argc, char **argv)
@@ -381,12 +425,20 @@ void *server_handler (void *fd_pointer)
     if (strcmp(command,"push")==0)
     {
         printf("got Command to push\n");
-        char*replyCommand = "Got the Command to push";
+        char* replyCommand = "Got the Command to push";
         write(sock, replyCommand,strlen(replyCommand)+1);
         //lock
         //if (canPush(sock))
          push(sock);
          //unlock 
+    }
+    if (strcmp(command, "history") == 0)
+    {
+        printf("got Command to history\n");
+        char* replyCommand = "Got The Command to get history";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+        history(sock);
+        
     }
     command = malloc (100 * sizeof(char));
    
