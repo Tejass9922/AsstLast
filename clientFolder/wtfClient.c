@@ -1066,7 +1066,6 @@ int main(int argc, char **argv)
             char command[5] = "push";
             send(socket,command,5,0);
             char* reply = malloc(50* sizeof(char));
-<<<<<<< HEAD
             recv(socket,reply,2000,0);
             printf("Reply: %s\n", reply);
             push(argv[2],socket);
