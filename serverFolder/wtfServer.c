@@ -50,7 +50,7 @@ void commit(int socket){
             printf("Server Buffer: %s\n", buffer);
             int length = strlen(buffer);
             char size[10];
-            printf("length: %d\n", length);
+            printf("length: %d\n", length); //manifest 
             sprintf(size,"%d",length);
             send(socket,size,10,0);
             char temp[8];
@@ -70,6 +70,15 @@ void commit(int socket){
 
             printf("Client Commit:\n%s", clientCommitFile);
 
+            char commitPath[strlen(projectName)+9];
+            strcpy(commitPath,projectName);
+            strcat(commitPath,"/");
+            strcat(commitPath,".Commit");
+
+            int fd = open(commitPath,O_RDWR|O_CREAT,0777);
+            printf("%s\n",commitPath);
+            printf("%d\n",commitSize);
+            write(fd,clientCommitFile,commitSize);
 
 
 
@@ -148,6 +157,9 @@ char* readInFile(char* fileName)
                 buffer[len+1] = '\0';    
             }
         }while(status >0);
+
+        printf(" Buffer Check: %s\n",buffer);
+        close(fd);
     return buffer; 
     }
     printf("Cannot open the file");
@@ -198,7 +210,11 @@ void createProject(int sock){
         printf("file Path: %s\n",filePath);
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
-        write(filedescriptor, "1\n", 2);
+        char nL = '\n';
+        char c = '1';
+        write(filedescriptor,&c,1);
+        write(filedescriptor,&nL,1);
+      
         close(filedescriptor);
 
         char* response = malloc(sizeof(char) * 100);
@@ -214,7 +230,7 @@ void createProject(int sock){
         fileContents = readInFile(filePath);
         send(sock, fileContents, strlen(readInFile(filePath)), 0);
         closedir(dr);
-        close(check);
+        //close(check);
             
     } 
         else{
@@ -225,6 +241,40 @@ void createProject(int sock){
 
     //Now that we made a physical copy of a directory with the given project name on the server with a manifest
     //we are supposed to send that over to the client. How do we send it over? In what format?
+}
+
+void push(int sock)
+{
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(sock, projectName, 100, 0);//gets project name from client 
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+    send(sock,"Got Project", 11 ,0);
+
+     char path[strlen(projectName)+5+strlen(".Commit")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".Commit");
+
+    char commitFileSize[10];
+    recv(sock, commitFileSize, 10, 0); //gets size of file as a char*
+            
+    int commitSize = atoi(commitFileSize); //converts char* into an integer 
+
+    char* clientCommitFile = (char*)(malloc(sizeof(char)*commitSize));
+
+    send(sock,"Got Size", 8 ,0); //sends confirmation that it got the size
+
+    recv(sock,clientCommitFile,commitSize,0);//saves the commit file inside clientCommitFile
+
+    printf("Client Commit:\n%s", clientCommitFile);
+
+    
+    
+
 }
 
 void *server_handler (void *fd_pointer);
@@ -324,7 +374,19 @@ void *server_handler (void *fd_pointer)
         printf("got Command to commit\n");
         char* replyCommand = "Got The Command to commit";
         write(sock, replyCommand, strlen(replyCommand) + 1);
+        
         commit(sock);
+        
+    }
+    if (strcmp(command,"push")==0)
+    {
+        printf("got Command to push\n");
+        char*replyCommand = "Got the Command to push";
+        write(sock, replyCommand,strlen(replyCommand)+1);
+        //lock
+        //if (canPush(sock))
+         push(sock);
+         //unlock 
     }
     command = malloc (100 * sizeof(char));
    
