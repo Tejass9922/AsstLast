@@ -24,7 +24,7 @@ char* readInFile(char* fileName);
 void history(int sock){
 
     char*projectName = (char*)(malloc(sizeof(char)*100));
-    int readSize = recv(socket, projectName, 100, 0);//gets the name of the project
+    int readSize = recv(sock, projectName, 100, 0);//gets the name of the project
     if (readSize > 0)
     {
         printf("Got requested path\n");
@@ -35,12 +35,14 @@ void history(int sock){
             strcat(path,"/");
             strcat(path,".history");
 
-    
+
 
     DIR *dr = opendir(projectName); 
         if (dr == NULL)  
         { 
-            printf("Project does not Exist" );
+            printf("Project does not Exist\n");
+            char* DNE = "DNE";
+            send(sock,DNE,strlen(DNE),0); //if folder DNE it sends an error message to client and stops 
             return;
             
         } 
@@ -48,15 +50,15 @@ void history(int sock){
         {
             char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
             buffer = readInFile(path); //opens and store the history file into a buffer
-            printf("Server Buffer: %s\n", buffer);
+            printf("History Buffer: %s\n", buffer);
             int length = strlen(buffer);
             char size[10];
-            printf("length: %d\n", length); //manifest 
+            printf("length: %d\n", length); 
             sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client
-            send(socket,size,10,0); //sends the size of the buffer that it will send next 
+            send(sock,size,10,0); //sends the size of the buffer that it will send next 
             char temp[8];
-            recv(socket,temp,8,0); //recieves a confirmation that the client got the size 
-            send(socket,buffer,length,0); // sends over the actual buffer containing the history file.
+            recv(sock,temp,8,0); //recieves a confirmation that the client got the size 
+            send(sock,buffer,length,0); // sends over the actual buffer containing the history file.
 
         }
     return;
@@ -200,7 +202,6 @@ char* readInFile(char* fileName)
             }
         }while(status >0);
 
-        printf(" Buffer Check: %s\n",buffer);
         close(fd);
     return buffer; 
     }

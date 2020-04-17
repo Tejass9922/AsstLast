@@ -253,12 +253,19 @@ void history(char * projectName, int socket)
     char* recieveSize = malloc (sizeof(char) * 10);
 
     recv(socket, recieveSize, 10, 0); //gets size of the buffer of the history file 
+    if (strcmp(recieveSize, "DNE") == 0)
+    {
+        printf("Folder does not exist\n"); //check to see if folder exists on server side, if not it stops
+        return;
+    }
     int size = atoi(recieveSize);
     send(socket,"Got Size", 8 ,0); //sends a confirmation that it got the size 
-    char*serverManifest =(char*)(malloc(sizeof(char)*size));
-    recv(socket,serverManifest,size,0); //gets buffer containing the file
+    char* historyBuffer =(char*)(malloc(sizeof(char)*size));
+    recv(socket, historyBuffer ,size,0); //gets buffer containing the file
 
-    
+    printf("History: \n%s\n", historyBuffer);
+
+
 
 }
 
@@ -1014,12 +1021,12 @@ int main(int argc, char **argv)
         }
         if (strcmp(argv[1],"history")==0){
             int socket = connectToServer();
-            char command[5] = "history";
+            char command[8] = "history";
             send(socket,command,8,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
-            push(argv[2],socket);
+            history(argv[2],socket);
         }
 
        
