@@ -171,10 +171,10 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                     else if  (! (sheadTemp->version < cheadTemp->version )) //if file paths are the same, hashes are different
                     {
                         printf("**Synch projects first!**\n");
-                       return;
-                        //int status;
-                        //status = remove(commitFileName);
+                        remove(commitFileName);
+                       return; 
                         //delete .commit file if it exists
+                       
                     }
             
                     else{
@@ -488,7 +488,41 @@ void commit(char* projectName, int socket){
    
 }
 
+void push(char*projectName,int socket)
+{
+    int len = strlen(projectName)+1;
+    send(socket,projectName,len,0);//sends project name to server 
+    char* confirmation = malloc (sizeof(char) * 12);
+    recv(socket, confirmation, 11 ,0);
+    printf("%s\n", confirmation);
+    char commitFileName[strlen(projectName)+10];
+    strcpy(commitFileName,projectName);
+    strcat(commitFileName,"/");
+    strcat(commitFileName,".Commit");
+   int fd = open(commitFileName,O_RDWR);
+   if (fd!=-1){
+        char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
+        
+        commitBuffer = readInFile(commitFileName); //gets commit file size
+        int commitSize = strlen(commitBuffer);
+        printf("%s\n",commitBuffer);
+        
+        int length = commitSize;
+        char size[10];
+        sprintf(size,"%d",commitSize);
+             //converts the size into a char* to send over to the server
+       
+        send(socket, size ,strlen(size), 0); //sends size of file
 
+        char temp[8];
+        recv(socket,temp,8,0);//gets confirmation from server that it got the size 
+       
+        send(socket,commitBuffer ,commitSize, 0); //sends the commit buffer using the size of it stores in size 
+   }
+  
+  //active commit? does that mean commit file per project on the server? or just one total commit file at a time? 
+   
+}
 void setTimeout(int milliseconds)
 {
     // a current time of milliseconds
@@ -745,6 +779,7 @@ char* readInFile(char* fileName)
                 buffer[len+1] = '\0';    
             }
         }while(status >0);
+        close(fd);
     return buffer; 
     }
     printf("Cannot open the file");
@@ -954,6 +989,15 @@ int main(int argc, char **argv)
             printf("Reply: %s\n", reply);
             if (canCommit(socket,argv[2]))
             commit(argv[2], socket);  
+        }
+        if (strcmp(argv[1],"push")==0){
+            int socket = connectToServer();
+            char command[5] = "push";
+            send(socket,command,5,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,2000,0);
+            printf("Reply: %s\n", reply);
+            push(argv[2],socket);
         }
 
        
