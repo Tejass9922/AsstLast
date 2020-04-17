@@ -245,10 +245,6 @@ char* readInFile(char* fileName)
             }
         }while(status >0);
 
-<<<<<<< HEAD
-        printf(" Buffer Check: %s\n",buffer);
-=======
->>>>>>> fd3db57498644c3bb7b6086a990651cb68015947
         close(fd);
     return buffer; 
     }
@@ -367,11 +363,8 @@ void push(int sock)
 
 }
 
-<<<<<<< HEAD
-=======
 
 
->>>>>>> fd3db57498644c3bb7b6086a990651cb68015947
 void *server_handler (void *fd_pointer);
 
 int main(int argc, char **argv)
@@ -476,18 +469,12 @@ void *server_handler (void *fd_pointer)
     if (strcmp(command,"push")==0)
     {
         printf("got Command to push\n");
-<<<<<<< HEAD
-        char*replyCommand = "Got the Command to push";
-=======
         char* replyCommand = "Got the Command to push";
->>>>>>> fd3db57498644c3bb7b6086a990651cb68015947
         write(sock, replyCommand,strlen(replyCommand)+1);
         //lock
         //if (canPush(sock))
          push(sock);
          //unlock 
-<<<<<<< HEAD
-=======
     }
     if (strcmp(command, "history") == 0)
     {
@@ -504,7 +491,6 @@ void *server_handler (void *fd_pointer)
         write(sock, replyCommand, strlen(replyCommand) + 1);  
         currentVersion(sock);
         
->>>>>>> fd3db57498644c3bb7b6086a990651cb68015947
     }
     command = malloc (100 * sizeof(char));
    
