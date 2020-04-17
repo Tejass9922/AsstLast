@@ -64,6 +64,49 @@ void history(int sock){
     return;
 }
 
+void currentVersion(int sock){
+
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(sock, projectName, 100, 0);//gets the name of the project
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+     char path[strlen(projectName)+5+strlen(".Manifest")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".Manifest");
+
+
+
+    DIR *dr = opendir(projectName); 
+        if (dr == NULL)  
+        { 
+            printf("Project does not Exist\n");
+            char* DNE = "DNE";
+            send(sock,DNE,strlen(DNE),0); //if folder DNE it sends an error message to client and stops 
+            return;
+            
+        } 
+        else
+        {
+            char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
+            buffer = readInFile(path); //opens and store the current version file into a buffer
+            printf("Current Version: \n%s\n", buffer);
+            int length = strlen(buffer);
+            char size[10];
+            printf("length: %d\n", length); 
+            sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client
+            send(sock,size,10,0); //sends the size of the buffer that it will send next 
+            char temp[8];
+            recv(sock,temp,8,0); //recieves a confirmation that the client got the size 
+            send(sock,buffer,length,0); // sends over the actual buffer containing the current version.
+
+        }
+    return;
+}
+
 void commit(int socket){
     
     char*projectName = (char*)(malloc(sizeof(char)*100));
@@ -439,6 +482,14 @@ void *server_handler (void *fd_pointer)
         char* replyCommand = "Got The Command to get history";
         write(sock, replyCommand, strlen(replyCommand) + 1);  
         history(sock);
+        
+    }
+    if (strcmp(command, "currentVersion") == 0)
+    {
+        printf("got Command for current version\n");
+        char* replyCommand = "Got The Command for current version";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+        currentVersion(sock);
         
     }
     command = malloc (100 * sizeof(char));
