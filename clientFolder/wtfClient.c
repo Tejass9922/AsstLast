@@ -304,7 +304,7 @@ void history(char * projectName, int socket)
     recv(socket, recieveSize, 10, 0); //gets size of the buffer of the history file 
     if (strcmp(recieveSize, "DNE") == 0)
     {
-        printf("Folder does not exist\n"); //check to see if folder exists on server side, if not it stops
+        printf("Folder / File does not exist\n"); //check to see if folder exists on server side, if not it stops
         return;
     }
     int size = atoi(recieveSize);
@@ -336,7 +336,7 @@ void currentVersion(char* projectName, int socket)
     char* manifestVersion =(char*)(malloc(sizeof(char)*size));
     recv(socket, manifestVersion ,size,0); //gets buffer containing the file
 
-    printf("History: \n%s\n", manifestVersion);
+    printf("Current Version: \n%s\n", manifestVersion);
 }
 
 File* tokenizeClientManifest(File*cHead,char*clientBuffer){

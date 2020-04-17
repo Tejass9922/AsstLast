@@ -48,18 +48,27 @@ void history(int sock){
         } 
         else
         {
-            char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
-            buffer = readInFile(path); //opens and store the history file into a buffer
-            printf("History Buffer: %s\n", buffer);
-            int length = strlen(buffer);
-            char size[10];
-            printf("length: %d\n", length); 
-            sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client
-            send(sock,size,10,0); //sends the size of the buffer that it will send next 
-            char temp[8];
-            recv(sock,temp,8,0); //recieves a confirmation that the client got the size 
-            send(sock,buffer,length,0); // sends over the actual buffer containing the history file.
-
+            int fd = open(path,O_RDWR);
+            if (fd!=-1){
+                char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
+                buffer = readInFile(path); //opens and store the history file into a buffer
+                printf("History Buffer: %s\n", buffer);
+                int length = strlen(buffer);
+                char size[10];
+                printf("length: %d\n", length); 
+                sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client
+                send(sock,size,10,0); //sends the size of the buffer that it will send next 
+                char temp[8];
+                recv(sock,temp,8,0); //recieves a confirmation that the client got the size 
+                send(sock,buffer,length,0); // sends over the actual buffer containing the history file.
+            }
+            else
+            {
+                 printf("File does not exist!\n");
+                 char* DNE = "DNE";
+                send(sock,DNE,strlen(DNE),0); //if folder DNE it sends an error message to client and stops 
+                return;
+            }
         }
     return;
 }
@@ -231,22 +240,22 @@ char* readInFile(char* fileName)
     int fd = open(fileName,O_RDWR);
     int status;
     if (fd!=-1){
-    do{
-   
-            status =  read(fd, &c, 1); 
-            if (status<=0){
-                break;
-            }
-            else{   
-                int len = strlen(buffer);
-                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-                buffer[len] = c;
-                buffer[len+1] = '\0';    
-            }
-        }while(status >0);
+        do{
+    
+                status =  read(fd, &c, 1); 
+                if (status<=0){
+                    break;
+                }
+                else{   
+                    int len = strlen(buffer);
+                    buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                    buffer[len] = c;
+                    buffer[len+1] = '\0';    
+                }
+            }while(status >0);
 
-        close(fd);
-    return buffer; 
+            close(fd);
+        return buffer; 
     }
     printf("Cannot open the file");
 }
