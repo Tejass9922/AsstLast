@@ -20,6 +20,102 @@
 
 
 char* readInFile(char* fileName);
+int is_regular_file(const char *path)
+{
+    struct stat path_stat;
+    stat(path, &path_stat);
+    return S_ISREG(path_stat.st_mode);
+}
+
+void listDirectoryRecursively(char *basePath)
+{
+    if (is_regular_file(basePath)==0){
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir)
+        return;
+
+    while ((dp = readdir(dir)) != NULL)
+    {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+        {
+          
+            strcpy(path, basePath);
+            strcat(path, "/");
+            strcat(path, dp->d_name);
+            printf("%s\n",path);
+            listDirectoryRecursively(path);
+        }
+    }
+
+    closedir(dir);
+
+    }
+    
+     
+     
+}
+
+void listFilesRecursively(char *basePath)
+{
+    if (is_regular_file(basePath)==1){
+    char path[1000];
+    struct dirent *dp;
+    DIR *dir = opendir(basePath);
+    if (!dir)
+        return;
+
+    while ((dp = readdir(dir)) != NULL)
+    {
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
+        {
+          
+            strcpy(path, basePath);
+            strcat(path, "/");
+            strcat(path, dp->d_name);
+            printf("%s\n", path);
+            listFilesRecursively(path);
+        }
+    }
+
+    closedir(dir);
+
+    }
+
+}
+    
+     
+  
+
+void checkout(int sock)
+
+{
+    char*projectName = (char*)(malloc(sizeof(char)*100));
+    int readSize = recv(sock, projectName, 100, 0);//gets the name of the project
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+    DIR *dr = opendir(projectName); 
+    if (dr == NULL)  
+    { 
+        printf("Project does not Exist\n");
+        char* DNE = "DNE";
+        send(sock,DNE,strlen(DNE),0); //if folder DNE it sends an error message to client and stops 
+        return;        
+    }
+    else
+    {
+        char* reply = "Got Path";
+        send(sock,reply,strlen(reply),0); 
+        listDirectoryRecursively(projectName);
+        printf("\n");
+       // listFilesRecursively(projectName);
+    }
+    
+
+}
 
 void history(int sock){
 
@@ -499,6 +595,14 @@ void *server_handler (void *fd_pointer)
         char* replyCommand = "Got The Command for current version";
         write(sock, replyCommand, strlen(replyCommand) + 1);  
         currentVersion(sock);
+        
+    }
+    if (strcmp(command, "checkout") == 0)
+    {
+        printf("got Command for checkout\n");
+        char* replyCommand = "Got The Command for checkout";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+        checkout(sock);
         
     }
     command = malloc (100 * sizeof(char));

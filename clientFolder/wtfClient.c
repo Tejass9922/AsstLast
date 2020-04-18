@@ -649,8 +649,6 @@ void commit(char* projectName, int socket){
    
 }
 
-
-
 void push(char*projectName,int socket)
 {
     int len = strlen(projectName)+1;
@@ -934,12 +932,16 @@ void create(int socket, char* projectName){
    
 }
 
-void checkout(char*projectName){
-   
-  int socket =  connectToServer();
-
-
+void checkout(char* projectName, int socket){
+    char* returnMessage = malloc (sizeof(char) * 50);
+    int len = strlen(projectName)+1;
+    send(socket,projectName,len,0);
+    recv(socket, returnMessage, 50, 0);
+    printf("%s\n", returnMessage); 
 }
+
+
+
 int getConfigureDetails(){
 
     char name[17] = ".Configure"; 
@@ -1256,6 +1258,15 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
             currentVersion(argv[2],socket);
+        }
+        if (strcmp(argv[1],"checkout")==0){
+            int socket = connectToServer();
+            char command[8] = "checkout";
+            send(socket,command,8,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+            checkout(argv[2],socket);
         }
 
        
