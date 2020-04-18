@@ -959,9 +959,9 @@ void checkout(char* projectName, int socket){
             recv(socket, recieveSize, 10, 0); //gets size of the path name
             int Namesize = atoi(recieveSize); //turns char array of size into a usuable int
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
-            char* fileName = malloc(sizeof(char) * Namesize); //allocates mem for the file path 
+            char* fileName = (char*) malloc(sizeof(char) * Namesize + 1); //allocates mem for the file path 
             recv(socket, fileName, Namesize, 0); //gets the file path
-            printf("FILE: %s\n", fileName); 
+            printf("FILE: %s + Size: %d\n", fileName, Namesize); 
             char* gotName = "Got Name";
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
 
@@ -969,7 +969,16 @@ void checkout(char* projectName, int socket){
         else if(strcmp(getPrompt, "DIRE") == 0)
         {
             char* gotType = "Got Type";
-            send(socket,gotType,strlen(gotType),0); 
+            send(socket,gotType,strlen(gotType),0); //send confirmation it got the type 
+            char* recieveSize = malloc (sizeof(char) * 10);
+            recv(socket, recieveSize, 10, 0); //gets size of the path name
+            int Diresize = atoi(recieveSize); //turns char array of size into a usuable int
+            send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
+            char* fileName = (char*) malloc(sizeof(char) * Diresize + 1); //allocates mem for the file path 
+            recv(socket, fileName, Diresize, 0); //gets the file path
+            printf("Dire: %s + Size: %d\n", fileName, Diresize); 
+            char* gotName = "Got Name";
+            send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
 
         }
         recv(socket, getPrompt, 5, 0);

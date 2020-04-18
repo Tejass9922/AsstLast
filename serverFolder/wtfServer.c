@@ -53,12 +53,12 @@ void listFilesRecursively(char *basePath, int socket)
                 recv(socket, confirmation, 100, 0); //gets cofirmation from client 
                 int fileNameLength = strlen(path); //gets the lenghth of the file path
                 char size[10];
-                printf("length: %d\n", fileNameLength); 
+                //printf("length: %d\n", fileNameLength); 
                 sprintf(size,"%d",fileNameLength); //changes the integer into a char array to be sent over to the client
                 send(socket,size,10,0); //sends the size of the path name 
                 char nameSizeConfirm[8];
                 recv(socket,nameSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
-
+                printf("path: %s + Size: %d\n", path, fileNameLength);
                 send(socket,path,fileNameLength,0); //sends actual file path name
                 char* confirmName = malloc(sizeof(char) * 9);
                 recv(socket,nameSizeConfirm,8,0); //client confirms it got the name
@@ -66,14 +66,25 @@ void listFilesRecursively(char *basePath, int socket)
             }
             else
             {
-                char* dire = "DIRE";
-                send(socket,dire,strlen(dire),0); //sends directory message
+                char* file = "DIRE";
+                send(socket,file,strlen(file),0); //sends file message 
                 char* confirmation = malloc(sizeof(char) * 9);
-                recv(socket, confirmation, 100, 0);
+                recv(socket, confirmation, 100, 0); //gets cofirmation from client 
+                int direNameLength = strlen(path); //gets the lenghth of the file path
+                char size[10];
+                //printf("length: %d\n", fileNameLength); 
+                sprintf(size,"%d",direNameLength); //changes the integer into a char array to be sent over to the client
+                send(socket,size,10,0); //sends the size of the path name 
+                char direSizeConfirm[8];
+                recv(socket, direSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
+                printf("path: %s + Size: %d\n", path, direNameLength);
+                send(socket,path,direNameLength,0); //sends actual file path name
+                char* confirmName = malloc(sizeof(char) * 9);
+                recv(socket, direSizeConfirm, 8,0); //client confirms it got the name
             }
             
-            printf("%s\t", path);
-            printf("%d\n",is_regular_file(path));
+            //printf("%s\t", path);
+            //printf("%d\n",is_regular_file(path));
             listFilesRecursively(path,socket);
         }
     }
@@ -92,7 +103,6 @@ void listFilesRecursively(char *basePath, int socket)
   
 
 void checkout(int sock)
-
 {
     char*projectName = (char*)(malloc(sizeof(char)*100));
     int readSize = recv(sock, projectName, 100, 0);//gets the name of the project
