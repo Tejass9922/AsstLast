@@ -937,7 +937,45 @@ void checkout(char* projectName, int socket){
     int len = strlen(projectName)+1;
     send(socket,projectName,len,0);
     recv(socket, returnMessage, 50, 0);
+    if (strcmp(returnMessage, "DNE") == 0)
+    {
+        printf("Folder does not exist\n"); //check to see if folder exists on server side, if not it stops
+        return;
+    }
     printf("%s\n", returnMessage); 
+
+    char* startSending = "Start Process";
+    send(socket,startSending,strlen(startSending),0); //starts the loop for recieving files and directories
+    char *getPrompt = malloc(sizeof(char) * 5);
+    recv(socket, getPrompt, 5, 0);
+
+    while (strcmp(getPrompt, "STOP") != 0)
+    {
+        if (strcmp(getPrompt, "FILE")==0)
+        {
+            char* gotType = "Got Type";
+            send(socket,gotType,strlen(gotType),0); //sebd confirmation it got the type 
+            char* recieveSize = malloc (sizeof(char) * 10);
+            recv(socket, recieveSize, 10, 0); //gets size of the path name
+            int Namesize = atoi(recieveSize); //turns char array of size into a usuable int
+            send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
+            char* fileName = malloc(sizeof(char) * Namesize); //allocates mem for the file path 
+            recv(socket, fileName, Namesize, 0); //gets the file path
+            printf("FILE: %s\n", fileName); 
+            char* gotName = "Got Name";
+            send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
+
+        }
+        else if(strcmp(getPrompt, "DIRE") == 0)
+        {
+            char* gotType = "Got Type";
+            send(socket,gotType,strlen(gotType),0); 
+
+        }
+        recv(socket, getPrompt, 5, 0);
+    }
+    //return;
+
 }
 
 
@@ -1261,8 +1299,8 @@ int main(int argc, char **argv)
         }
         if (strcmp(argv[1],"checkout")==0){
             int socket = connectToServer();
-            char command[8] = "checkout";
-            send(socket,command,8,0);
+            char command[9] = "checkout";
+            send(socket,command,9,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);

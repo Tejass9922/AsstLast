@@ -27,39 +27,10 @@ int is_regular_file(const char *path)
     return S_ISREG(path_stat.st_mode);
 }
 
-void listDirectoryRecursively(char *basePath)
+
+void listFilesRecursively(char *basePath, int socket)
 {
-    if (is_regular_file(basePath)==0){
-    char path[1000];
-    struct dirent *dp;
-    DIR *dir = opendir(basePath);
-    if (!dir)
-        return;
-
-    while ((dp = readdir(dir)) != NULL)
-    {
-        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
-        {
-          
-            strcpy(path, basePath);
-            strcat(path, "/");
-            strcat(path, dp->d_name);
-            printf("%s\n",path);
-            listDirectoryRecursively(path);
-        }
-    }
-
-    closedir(dir);
-
-    }
     
-     
-     
-}
-
-void listFilesRecursively(char *basePath)
-{
-    if (is_regular_file(basePath)==1){
     char path[1000];
     struct dirent *dp;
     DIR *dir = opendir(basePath);
@@ -74,14 +45,46 @@ void listFilesRecursively(char *basePath)
             strcpy(path, basePath);
             strcat(path, "/");
             strcat(path, dp->d_name);
-            printf("%s\n", path);
-            listFilesRecursively(path);
+            if (is_regular_file(path) == 1) //check to see if it is a file or directory 
+            {
+                char* file = "FILE";
+                send(socket,file,strlen(file),0); //sends file message 
+                char* confirmation = malloc(sizeof(char) * 9);
+                recv(socket, confirmation, 100, 0); //gets cofirmation from client 
+                int fileNameLength = strlen(path); //gets the lenghth of the file path
+                char size[10];
+                printf("length: %d\n", fileNameLength); 
+                sprintf(size,"%d",fileNameLength); //changes the integer into a char array to be sent over to the client
+                send(socket,size,10,0); //sends the size of the path name 
+                char nameSizeConfirm[8];
+                recv(socket,nameSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
+
+                send(socket,path,fileNameLength,0); //sends actual file path name
+                char* confirmName = malloc(sizeof(char) * 9);
+                recv(socket,nameSizeConfirm,8,0); //client confirms it got the name
+
+            }
+            else
+            {
+                char* dire = "DIRE";
+                send(socket,dire,strlen(dire),0); //sends directory message
+                char* confirmation = malloc(sizeof(char) * 9);
+                recv(socket, confirmation, 100, 0);
+            }
+            
+            printf("%s\t", path);
+            printf("%d\n",is_regular_file(path));
+            listFilesRecursively(path,socket);
         }
     }
 
     closedir(dir);
 
-    }
+    
+   
+    
+
+    
 
 }
     
@@ -109,9 +112,16 @@ void checkout(int sock)
     {
         char* reply = "Got Path";
         send(sock,reply,strlen(reply),0); 
-        listDirectoryRecursively(projectName);
-        printf("\n");
-       // listFilesRecursively(projectName);
+       // listDirectoryRecursively(projectName);
+
+        char* startMessage = malloc (sizeof(char) * 14);
+        recv(sock, startMessage, 100, 0); //gets start process message
+        printf("%s\n", startMessage);
+
+        listFilesRecursively(projectName, sock);
+        printf("reached here\n");
+        char* STOP = "STOP";
+        send(sock,STOP,strlen(STOP),0);
     }
     
 
