@@ -933,6 +933,20 @@ void create(int socket, char* projectName){
 }
 
 void checkout(char* projectName, int socket){
+
+    DIR *dr = opendir(projectName);
+    if (dr == NULL)
+    {
+        int check = mkdir(projectName,0777);
+        
+    }
+    else
+    {
+        send(socket,"!**SlATtCanT!DiRExiSTS!!:)**",29,0);
+        printf("Project Already Exists!\n");
+        return;
+    }
+   
     char* returnMessage = malloc (sizeof(char) * 50);
     int len = strlen(projectName)+1;
     send(socket,projectName,len,0);
@@ -944,10 +958,13 @@ void checkout(char* projectName, int socket){
     }
     printf("%s\n", returnMessage); 
 
+   
+    
     char* startSending = "Start Process";
     send(socket,startSending,strlen(startSending),0); //starts the loop for recieving files and directories
     char *getPrompt = malloc(sizeof(char) * 5);
     recv(socket, getPrompt, 5, 0);
+
 
     while (strcmp(getPrompt, "STOP") != 0)
     {
@@ -968,6 +985,8 @@ void checkout(char* projectName, int socket){
             char* isNotEmpty = malloc( sizeof(char) * 11);
             recv(socket, isNotEmpty, 11, 0);
             send(socket, "OKK", 4, 0);
+            int fd = open(fileName,O_RDWR|O_CREAT|O_APPEND,0777);
+            printf("FD: %d",fd);
             if (strcmp(isNotEmpty, "FF") == 0)
             {
 
@@ -979,24 +998,13 @@ void checkout(char* projectName, int socket){
                 recv(socket, fileBuffer, Filesize, 0); //gets the file buffer
                 send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file pat
                 printf("Buffer: %s\n", fileBuffer);
+                write(fd,fileBuffer,strlen(fileBuffer));
             }
             else
-            {
+            {  
                 printf("Empty File\n");
             }
-            
-            
-            
-
-            
-            
-            
-           
-
-            //printf("Buffer: %s\n", fileBuffer);
-
-
-
+ 
         }
         else if(strcmp(getPrompt, "DIRE") == 0)
         {
@@ -1011,11 +1019,12 @@ void checkout(char* projectName, int socket){
             //printf("Dire: %s + Size: %d\n", fileName, Diresize); 
             char* gotName = "Got Name";
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
-
+            int check = mkdir(fileName,0777);
+           
         }
         recv(socket, getPrompt, 5, 0);
     }
-    //return;
+   closedir(dr);
 
 }
 

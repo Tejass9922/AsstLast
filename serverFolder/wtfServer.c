@@ -142,10 +142,12 @@ void checkout(int sock)
 {
     char*projectName = (char*)(malloc(sizeof(char)*100));
     int readSize = recv(sock, projectName, 100, 0);//gets the name of the project
-    if (readSize > 0)
+    if (strcmp("!**SlATtCanT!DiRExiSTS!!:)**",projectName ) == 0)
     {
-        printf("Got requested path\n");
+       printf("Client already has the project!\n");
+       return;
     }
+
     DIR *dr = opendir(projectName); 
     if (dr == NULL)  
     { 
@@ -387,7 +389,7 @@ int returnFiles(int sock)
 
 char* readInFile(char* fileName)
 {
-    char* buffer = (char*)(malloc(sizeof(char)*1000));
+    char* buffer = (char*)(malloc(sizeof(char)*10000));
     char c;
     int fd = open(fileName,O_RDONLY);
     int status;
@@ -401,17 +403,20 @@ char* readInFile(char* fileName)
                 }
                 else{   
                   
-                    int len = strlen(buffer);
-                    char* new_buffer = (char *)malloc((size_t)(strlen(buffer)+2));
+                    
+                   /* int len = strlen(buffer);
+                    char* new_buffer = (char *)malloc((strlen(buffer)+2));
                     memcpy((void *)new_buffer,(void *)buffer, (size_t)strlen(buffer)+2);
                     free(buffer);
                     buffer = new_buffer;
                     buffer[len] = c;
-                    buffer[len+1] = '\0';
+                    buffer[len+1] = '\0';*/
+                    buffer[counter] = c;
+                    counter++;
+                  
                 }
                
             }while(status >0);
-            printf("ReadInFileBuffer: %s\n",buffer);
             printf("\n");
             close(fd);
         return buffer; 
