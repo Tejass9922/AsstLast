@@ -287,11 +287,11 @@ void commit(int socket){
 
 
     DIR *dr = opendir(projectName); 
-        if (dr == NULL)  
+        if (dr == NULL) 
         { 
+            send(socket,"DNE",4,0);
             printf("Project does not Exist" );
-            return;
-            
+            return;       
         } 
         else
         {
@@ -306,7 +306,7 @@ void commit(int socket){
             char temp[8];
             recv(socket,temp,8,0);
             send(socket,buffer,length,0);
-
+            //
             char commitFileSize[10];
             recv(socket, commitFileSize, 10, 0); //gets size of file as a char*
             
@@ -536,7 +536,47 @@ void push(int sock)
 
 }
 
+void update(int socket){
 
+    char*projectName = (char*)(malloc(sizeof(char)*100)); //allocates meme for the project name
+    int readSize = recv(socket, projectName, 100, 0); //gets project name
+    if (readSize > 0)
+    {
+        printf("Got requested path\n");
+    }
+
+     char path[strlen(projectName)+5+strlen(".Manifest")];
+            strcpy(path,projectName);
+            strcat(path,"/");
+            strcat(path,".Manifest");
+
+
+
+    DIR *dr = opendir(projectName); 
+        if (dr == NULL)  //check to see if the project exists, and sends error messages
+        { 
+            send(socket,"DNE",4,0); 
+            printf("Project does not Exist" );
+            return;
+            
+        } 
+        else
+        {
+            char* buffer = malloc(sizeof(char) * (strlen(readInFile(path)))); //allocates mem for the file
+            buffer = readInFile(path); //stores file in buffer
+            printf("Server Buffer: %s\n", buffer);
+            int length = strlen(buffer);
+            char size[10];
+            printf("length: %d\n", length); //manifest 
+            sprintf(size,"%d",length); //changes size from an integer to a char* 
+            send(socket,size,10,0); //sends size as a char* 
+            char temp[8];
+            recv(socket,temp,8,0); //gets confirmation that client got size
+            send(socket,buffer,length,0); //sends actula buffer 
+        }
+        //might have to recv the .Update file from the client
+
+}
 
 void *server_handler (void *fd_pointer);
 
@@ -671,6 +711,14 @@ void *server_handler (void *fd_pointer)
         char* replyCommand = "Got The Command for checkout";
         write(sock, replyCommand, strlen(replyCommand) + 1);  
         checkout(sock);
+        
+    }
+    if (strcmp(command, "update") == 0)
+    {
+        printf("got Command for update\n");
+        char* replyCommand = "Got The Command for update";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+        update(sock);
         
     }
     command = malloc (100 * sizeof(char));
