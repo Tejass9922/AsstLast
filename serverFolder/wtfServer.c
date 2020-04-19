@@ -51,17 +51,52 @@ void listFilesRecursively(char *basePath, int socket)
                 send(socket,file,strlen(file),0); //sends file message 
                 char* confirmation = malloc(sizeof(char) * 9);
                 recv(socket, confirmation, 100, 0); //gets cofirmation from client 
-                int fileNameLength = strlen(path); //gets the lenghth of the file path
+                int fileNameLength = strlen(path)+1; //gets the lenghth of the file path
                 char size[10];
                 //printf("length: %d\n", fileNameLength); 
                 sprintf(size,"%d",fileNameLength); //changes the integer into a char array to be sent over to the client
                 send(socket,size,10,0); //sends the size of the path name 
                 char nameSizeConfirm[8];
                 recv(socket,nameSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
-                printf("path: %s + Size: %d\n", path, fileNameLength);
-                send(socket,path,fileNameLength,0); //sends actual file path name
+                //printf("path: %s + Size: %d\n", path, fileNameLength);
+                char* tPath = (char*)(malloc(sizeof(char)*(strlen(path))));
+                tPath = path;
+                send(socket,tPath,fileNameLength,0); //sends actual file path name
                 char* confirmName = malloc(sizeof(char) * 9);
-                recv(socket,nameSizeConfirm,8,0); //client confirms it got the name
+                recv(socket,nameSizeConfirm,8,0); //client confirms it got the namE
+
+                
+                int Fsize = 1000;//strlen(readInFile(tPath)); //gets size of file
+                char* fileBuffer = (char*) malloc(sizeof(char) * Fsize); //mallocs a buffer for the file 
+                fileBuffer = readInFile(tPath); //puts file into a buffer
+                if (fileBuffer[0] != '\0')
+                {
+                    send(socket,"FF",3,0); //send a signal to client saying file is not empty 
+                    char*emptyCheck = (char*)(malloc(sizeof(char)*4));
+                    recv(socket,emptyCheck,4,0); //recieved confimration from client that file is not empty 
+
+                    char fileSizeArr[10]; 
+                    sprintf(fileSizeArr,"%d", Fsize); //changes the integer into a char array to be sent over to the client
+                    send(socket,fileSizeArr,10,0); //sends the size of buffer
+                    char FileSizeConfirm[8];
+                    recv(socket,FileSizeConfirm,8,0); //client confirms it got the size of the file
+                    send(socket,fileBuffer, Fsize, 0); //sends the actual file buffer
+                    recv(socket,FileSizeConfirm,8,0); //client confirms it got the namE
+                    //printf("Buffer: %s\n", fileBuffer);
+
+                }
+                else
+                {
+                    char* isNotEmpty = malloc( sizeof(char) * 11);
+                    send(socket, "EE", 3, 0);
+                    char*emptyCheck = (char*)(malloc(sizeof(char)*4));
+                    recv(socket,emptyCheck,4,0); //recieved confimration from client that file is empty 
+                  
+                    printf("File Empty\n");
+                }
+             
+               
+            
 
             }
             else
@@ -77,7 +112,7 @@ void listFilesRecursively(char *basePath, int socket)
                 send(socket,size,10,0); //sends the size of the path name 
                 char direSizeConfirm[8];
                 recv(socket, direSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
-                printf("path: %s + Size: %d\n", path, direNameLength);
+                //printf("path: %s + Size: %d\n", path, direNameLength);
                 send(socket,path,direNameLength,0); //sends actual file path name
                 char* confirmName = malloc(sizeof(char) * 9);
                 recv(socket, direSizeConfirm, 8,0); //client confirms it got the name
@@ -85,6 +120,7 @@ void listFilesRecursively(char *basePath, int socket)
             
             //printf("%s\t", path);
             //printf("%d\n",is_regular_file(path));
+            
             listFilesRecursively(path,socket);
         }
     }
@@ -94,7 +130,7 @@ void listFilesRecursively(char *basePath, int socket)
     
    
     
-
+  
     
 
 }
@@ -351,25 +387,32 @@ int returnFiles(int sock)
 
 char* readInFile(char* fileName)
 {
-    char* buffer = malloc(sizeof(char) *1);
+    char* buffer = (char*)(malloc(sizeof(char)*1000));
     char c;
-    int fd = open(fileName,O_RDWR);
+    int fd = open(fileName,O_RDONLY);
     int status;
+    int counter = 0;
     if (fd!=-1){
         do{
     
-                status =  read(fd, &c, 1); 
+                status =  read(fd, &c, 1);
                 if (status<=0){
                     break;
                 }
                 else{   
+                  
                     int len = strlen(buffer);
-                    buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                    char* new_buffer = (char *)malloc((size_t)(strlen(buffer)+2));
+                    memcpy((void *)new_buffer,(void *)buffer, (size_t)strlen(buffer)+2);
+                    free(buffer);
+                    buffer = new_buffer;
                     buffer[len] = c;
-                    buffer[len+1] = '\0';    
+                    buffer[len+1] = '\0';
                 }
+               
             }while(status >0);
-
+            printf("ReadInFileBuffer: %s\n",buffer);
+            printf("\n");
             close(fd);
         return buffer; 
     }

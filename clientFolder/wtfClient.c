@@ -955,15 +955,47 @@ void checkout(char* projectName, int socket){
         {
             char* gotType = "Got Type";
             send(socket,gotType,strlen(gotType),0); //sebd confirmation it got the type 
-            char* recieveSize = malloc (sizeof(char) * 10);
+            char* recieveSize = (char*)malloc (sizeof(char) * 10);
             recv(socket, recieveSize, 10, 0); //gets size of the path name
             int Namesize = atoi(recieveSize); //turns char array of size into a usuable int
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
-            char* fileName = (char*) malloc(sizeof(char) * Namesize + 1); //allocates mem for the file path 
+            char* fileName = (char*) malloc(sizeof(char) * Namesize); //allocates mem for the file path 
             recv(socket, fileName, Namesize, 0); //gets the file path
-            printf("FILE: %s + Size: %d\n", fileName, Namesize); 
+            //printf("FILE: %s + Size: %d\n", fileName, Namesize); 
             char* gotName = "Got Name";
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
+
+            char* isNotEmpty = malloc( sizeof(char) * 11);
+            recv(socket, isNotEmpty, 11, 0);
+            send(socket, "OKK", 4, 0);
+            if (strcmp(isNotEmpty, "FF") == 0)
+            {
+
+                char* recieveFileSize = (char*)malloc (sizeof(char) * 10); 
+                recv(socket, recieveFileSize, 10, 0); //gets size of the file 
+                int Filesize = atoi(recieveFileSize); //turns char array of size into a usuable int
+                send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file buffer 
+                char* fileBuffer = (char*) malloc(sizeof(char) * Filesize); //allocates mem for the file buffer 
+                recv(socket, fileBuffer, Filesize, 0); //gets the file buffer
+                send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file pat
+                printf("Buffer: %s\n", fileBuffer);
+            }
+            else
+            {
+                printf("Empty File\n");
+            }
+            
+            
+            
+
+            
+            
+            
+           
+
+            //printf("Buffer: %s\n", fileBuffer);
+
+
 
         }
         else if(strcmp(getPrompt, "DIRE") == 0)
@@ -976,7 +1008,7 @@ void checkout(char* projectName, int socket){
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
             char* fileName = (char*) malloc(sizeof(char) * Diresize + 1); //allocates mem for the file path 
             recv(socket, fileName, Diresize, 0); //gets the file path
-            printf("Dire: %s + Size: %d\n", fileName, Diresize); 
+            //printf("Dire: %s + Size: %d\n", fileName, Diresize); 
             char* gotName = "Got Name";
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
 
