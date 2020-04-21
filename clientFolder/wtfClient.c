@@ -15,6 +15,7 @@
 #include <openssl/sha.h>
 #include <dirent.h>
 #include <openssl/err.h>
+#include <netdb.h> 
 
 
 char* readInFile(char* fileName);
@@ -41,7 +42,36 @@ typedef struct ConfigureInfo{
 
 ConfigureInfo info;
 
-
+// Returns hostname for the local computer 
+void checkHostName(int hostname) 
+{ 
+    if (hostname == -1) 
+    { 
+        perror("gethostname"); 
+        exit(1); 
+    } 
+} 
+  
+// Returns host information corresponding to host name 
+void checkHostEntry(struct hostent * hostentry) 
+{ 
+    if (hostentry == NULL) 
+    { 
+        perror("gethostbyname"); 
+        exit(1); 
+    } 
+} 
+  
+// Converts space-delimited IPv4 addresses 
+// to dotted-decimal format 
+void checkIPbuffer(char *IPbuffer) 
+{ 
+    if (NULL == IPbuffer) 
+    { 
+        perror("inet_ntoa"); 
+        exit(1); 
+    } 
+} 
 void insertFileNode(File **head, File *newNode)
 {
     newNode->next = *head;
@@ -158,8 +188,26 @@ void writeUpdate(int fd,int version,char*filePath, char*hash,char command){
 
 void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLength, char* projectName,int socket)
 {
-        //printf("ClientV = %d\n", client.ProjectVersion);
-        //printf("serverV = %d\n", server.ProjectVersion);
+        char hostbuffer[256]; 
+        char *IPbuffer = malloc(16); 
+        struct hostent *host_entry; 
+        int hostname; 
+    
+        // To retrieve hostname 
+        hostname = gethostname(hostbuffer, sizeof(hostbuffer)); 
+        checkHostName(hostname); 
+    
+        // To retrieve host information 
+        host_entry = gethostbyname(hostbuffer); 
+        checkHostEntry(host_entry); 
+    
+        // To convert an Internet network 
+        // address into ASCII string 
+        IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
+    
+        printf("Hostname: %s\n", hostbuffer); 
+        printf("Host IP: %s\n", IPbuffer);
+
         if (client.ProjectVersion != server.ProjectVersion)
         {
             printf("Update Local Project\n");
@@ -171,12 +219,13 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         File* cheadTemp2 = client.fileHead;
         File* sheadTemp2 = server.fileHead;
         
-        char* commitFileName = malloc((strlen(projectName) + 9) * sizeof(char));
+        char* commitFileName = malloc((strlen(projectName) + 10 + strlen(IPbuffer)) * sizeof(char));
         strcpy(commitFileName, projectName);
-        char commiteExt[9] = "/.Commit";
+        char commiteExt[10] = "/.Commit_";
         strcat(commitFileName, commiteExt);
+        strcat(commitFileName, IPbuffer);
         printf("%s\n",commitFileName);
-    int commitFD = open(commitFileName,O_RDWR|O_APPEND);
+        int commitFD = open(commitFileName,O_RDWR|O_APPEND);
     if (commitFD!=-1){
         printf("*Overwriting Commit File**\n");
     }
@@ -292,6 +341,14 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
         close(commitFD);
 
+        char temp[8];
+
+        send(socket,commitFileName ,strlen(commitFileName), 0); 
+
+        recv(socket,temp,8,0);
+       
+       
+
         char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
         
         commitBuffer = readInFile(commitFileName); //gets commit file size
@@ -305,7 +362,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
        
         send(socket, size ,strlen(size), 0); //sends size of file
 
-        char temp[8];
+       
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
         send(socket,commitBuffer ,commitSize, 0); //sends the commit buffer using the size of it stores in size 

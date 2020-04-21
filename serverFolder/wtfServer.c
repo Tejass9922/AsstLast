@@ -307,6 +307,17 @@ void commit(int socket){
             recv(socket,temp,8,0);
             send(socket,buffer,length,0);
             //
+
+            char commitPath[strlen(projectName)+100];
+
+            recv(socket, commitPath, 100, 0); 
+            send(socket,"Got Size", 8 ,0); 
+
+            //strcpy(commitPath,projectName);
+            //strcat(commitPath,"/");
+            //strcat(commitPath,".Commit");
+
+
             char commitFileSize[10];
             recv(socket, commitFileSize, 10, 0); //gets size of file as a char*
             
@@ -320,15 +331,13 @@ void commit(int socket){
 
             printf("Client Commit:\n%s", clientCommitFile);
 
-            char commitPath[strlen(projectName)+9];
-            strcpy(commitPath,projectName);
-            strcat(commitPath,"/");
-            strcat(commitPath,".Commit");
-
+            
             int fd = open(commitPath,O_RDWR|O_CREAT,0777);
             printf("%s\n",commitPath);
             printf("%d\n",commitSize);
             write(fd,clientCommitFile,commitSize);
+
+            close(fd);
 
 
 
@@ -417,7 +426,7 @@ char* readInFile(char* fileName)
                 }
                
             }while(status >0);
-            printf("\n");
+           printf("Buffer: %s\n");
             close(fd);
         return buffer; 
     }
@@ -439,9 +448,10 @@ void destroyProject(int sock)
     if (dr != NULL)
     {
         closedir(dr);
+        system(pathToDelete);
         printf("Successfully Destroyed\n");
         send(sock, "Successfully Deleted", 20, 0);
-        system(pathToDelete);
+        printf("Checking to make sure it was deleted\n");
         return;
     }
     else
