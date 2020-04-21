@@ -306,12 +306,19 @@ void commit(int socket){
             char temp[8];
             recv(socket,temp,8,0);
             send(socket,buffer,length,0);
+
+
+            char commitNameSize[10];
+            recv(socket, commitNameSize, 10, 0); //gets size of file name 
+            int NameSize = atoi(commitNameSize); //converts char* to int 
+            send(socket,"Got Size", 8 ,0); //sends confirmation
+
             //
 
-            char commitPath[strlen(projectName)+100];
+            char* commitPath = malloc(NameSize); //mallocs size for filename 
 
-            recv(socket, commitPath, 100, 0); 
-            send(socket,"Got Size", 8 ,0); 
+            recv(socket, commitPath, 100, 0); //gets file name 
+            send(socket,"Got Size", 8 ,0); //sends confirmation
 
             //strcpy(commitPath,projectName);
             //strcat(commitPath,"/");

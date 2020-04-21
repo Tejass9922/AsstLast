@@ -343,9 +343,21 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
         char temp[8];
 
-        send(socket,commitFileName ,strlen(commitFileName), 0); 
+        int Namelength = strlen(commitFileName); //gets length of file name 
+        char NameSize[10];
+        sprintf(NameSize,"%d",Namelength); //converts int to char*
 
-        recv(socket,temp,8,0);
+        send(socket, NameSize ,strlen(NameSize), 0); //sends size of file name
+
+        recv(socket,temp,8,0); //recieved confirmation
+
+
+
+        send(socket,commitFileName ,strlen(commitFileName), 0); //sends file name 
+
+        recv(socket,temp,8,0); //recieves confirmation
+
+
        
        
 
