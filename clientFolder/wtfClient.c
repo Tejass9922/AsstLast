@@ -362,10 +362,12 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
        
 
         char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
+
+        
         
         commitBuffer = readInFile(commitFileName); //gets commit file size
         int commitSize = strlen(commitBuffer);
-        //printf("%s\n",commitBuffer);
+        printf("%s\n",commitBuffer);
 
         int length = commitSize;
         char size[10];
