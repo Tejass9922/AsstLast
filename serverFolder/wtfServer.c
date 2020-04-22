@@ -900,6 +900,7 @@ void *server_handler (void *fd_pointer)
             }
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
+            printf("position: %d\n", mutexPosition);
             destroyProject(sock); 
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
             return;
@@ -1080,6 +1081,7 @@ void *server_handler (void *fd_pointer)
             }
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
+            printf("position: %d\n", mutexPosition);
             checkout(sock); 
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
             return;
