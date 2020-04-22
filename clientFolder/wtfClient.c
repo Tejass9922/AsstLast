@@ -208,28 +208,30 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         printf("Hostname: %s\n", hostbuffer); 
         printf("Host IP: %s\n", IPbuffer);
 
-        if (client.ProjectVersion != server.ProjectVersion)
-        {
-            printf("Update Local Project\n");
-            return;
-        }
-       
-        File* cheadTemp = client.fileHead;
-        File* sheadTemp = server.fileHead;
-        File* cheadTemp2 = client.fileHead;
-        File* sheadTemp2 = server.fileHead;
+     
+   
         
         char* commitFileName = malloc((strlen(projectName) + 10 + strlen(IPbuffer)) * sizeof(char));
         strcpy(commitFileName, projectName);
         char commiteExt[10] = "/.Commit_";
         strcat(commitFileName, commiteExt);
         strcat(commitFileName, IPbuffer);
-        printf("%s\n",commitFileName);
+        printf("%s\n",commitFileName);   
+        if (client.ProjectVersion != server.ProjectVersion)
+        {
+            printf("Update Local Project\n");
+            return;
+        }
         int commitFD = open(commitFileName,O_RDWR|O_APPEND);
     if (commitFD!=-1){
         printf("*Overwriting Commit File**\n");
     }
-     commitFD = open(commitFileName,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);
+     commitFD = open(commitFileName,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);    
+
+        File* cheadTemp = client.fileHead;
+        File* sheadTemp = server.fileHead;
+        File* cheadTemp2 = client.fileHead;
+        File* sheadTemp2 = server.fileHead;
     
      //printf("commitFd: %d\n",commitFD);
         if ((sheadTemp==NULL) &&(cheadTemp==NULL)){
@@ -378,6 +380,10 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
     char*commitBuffer = &buffer[0];
    
+<<<<<<< HEAD
+=======
+   close(fd);
+>>>>>>> 50634cf08985486c3c49429949682383f2389c06
        
         printf("reached\n");
       
@@ -1151,26 +1157,85 @@ void commit(char* projectName, int socket){
 
 void push(char*projectName,int socket)
 {
-    int len = strlen(projectName)+1;
-    send(socket,projectName,len,0);//sends project name to server 
+
+   
+     char hostbuffer[256]; 
+        char *IPbuffer = malloc(16); 
+        struct hostent *host_entry; 
+        int hostname; 
+    
+        // To retrieve hostname 
+        hostname = gethostname(hostbuffer, sizeof(hostbuffer)); 
+        checkHostName(hostname); 
+    
+        // To retrieve host information 
+        host_entry = gethostbyname(hostbuffer); 
+        checkHostEntry(host_entry); 
+    
+        // To convert an Internet network 
+        // address into ASCII string 
+        IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
+    
+        printf("Hostname: %s\n", hostbuffer); 
+        printf("Host IP: %s\n", IPbuffer);
+
+     
+   
+        
+        char* commitFileName = malloc((strlen(projectName) + 10 + strlen(IPbuffer)) * sizeof(char)); //mallocs size for file name 
+        strcpy(commitFileName, projectName);
+        char commiteExt[10] = "/.Commit_";
+        strcat(commitFileName, commiteExt);
+        strcat(commitFileName, IPbuffer);
+        printf("%s\n",commitFileName);   //creates project name
+
+        char temp[8];
+
+        int Namelength = strlen(commitFileName); //gets length of file name 
+        char NameSize[10];
+        sprintf(NameSize,"%d",Namelength); //converts int to char*
+
+        send(socket, NameSize ,strlen(NameSize), 0); //sends size of file name
+
+        recv(socket,temp,8,0); //recieved confirmation
+   
+
+    
+    send(socket,commitFileName,strlen(commitFileName),0);//sends project name
+
     char* confirmation = malloc (sizeof(char) * 12);
-    recv(socket, confirmation, 11 ,0);
+    recv(socket, confirmation, 12 ,0);
     printf("%s\n", confirmation);
+
+    /*
     char commitFileName[strlen(projectName)+10];
     strcpy(commitFileName,projectName);
     strcat(commitFileName,"/");
     strcat(commitFileName,".Commit");
-   int fd = open(commitFileName,O_RDWR);
+    */
+
+   int fd = open(commitFileName,O_RDONLY);
    if (fd!=-1){
-        char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
+      char c;
+       int status = 0;
+       char buffer[1000000];
+      
+       int counter = 0;
+       do{
+           status = read(fd,&c,1);
+           if (status<=0)
+            break;
+          buffer[counter] = c;
+          counter++;
+
+       }while (status>0);
+        char*commitBuffer = &buffer[0];
+         close(fd);
         
-        commitBuffer = readInFile(commitFileName); //gets commit file size
-        int commitSize = strlen(commitBuffer);
-        printf("%s\n",commitBuffer);
-        
-        int length = commitSize;
+        int length = strlen(commitBuffer);
+        printf("%d\n",length);
         char size[10];
-        sprintf(size,"%d",commitSize);
+        sprintf(size,"%d",length);
              //converts the size into a char* to send over to the server
        
         send(socket, size ,strlen(size), 0); //sends size of file
@@ -1178,8 +1243,15 @@ void push(char*projectName,int socket)
         char temp[8];
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
-        send(socket,commitBuffer ,commitSize, 0); //sends the commit buffer using the size of it stores in size 
+        send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
    }
+
+  
+      
+            
+  
+
+   
   
   //active commit? does that mean commit file per project on the server? or just one total commit file at a time? 
    

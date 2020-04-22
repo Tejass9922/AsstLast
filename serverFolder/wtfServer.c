@@ -521,20 +521,29 @@ void createProject(int sock){
 
 void push(int sock)
 {
-    char*projectName = (char*)(malloc(sizeof(char)*100));
-    int readSize = recv(sock, projectName, 100, 0);//gets project name from client 
+    char* projectName = "Shravan";
+    //need to get project Name
+
+     char commitNameSize[10];
+     recv(sock, commitNameSize, 10, 0); //gets size of file name 
+     int NameSize = atoi(commitNameSize); //converts char* to int 
+     send(sock,"Got Size", 8 ,0); //sends confirmation
+
+            
+
+     char* commitPath = malloc(NameSize); //mallocs size for filename 
+     
+
+
+    int readSize = recv(sock, commitPath, NameSize, 0);//gets project name from client 
     if (readSize > 0)
     {
         printf("Got requested path\n");
     }
 
-    send(sock,"Got Project", 11 ,0);
+    send(sock,"Got Project", 12 ,0);
 
-     char path[strlen(projectName)+5+strlen(".Commit")];
-            strcpy(path,projectName);
-            strcat(path,"/");
-            strcat(path,".Commit");
-
+   
     char commitFileSize[10];
     recv(sock, commitFileSize, 10, 0); //gets size of file as a char*
             
@@ -546,9 +555,93 @@ void push(int sock)
 
     recv(sock,clientCommitFile,commitSize,0);//saves the commit file inside clientCommitFile
 
-    printf("Client Commit:\n%s", clientCommitFile);
+    //printf("Client Commit:\n%s", clientCommitFile);
+    struct dirent *dp, *dx;
+    DIR *dir = opendir(projectName); //opens project directory
+    if (!dir){
+        printf("Project Name does not exist!\n");
+        return; //returns if DNE
+    }
+    bool same = false;
+    while ((dp = readdir(dir)) != NULL)
+    {
+         char*commmitExtraction = &commitPath[strlen(projectName)+1];
+      
+        
+        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0 && strcmp(dp->d_name, commmitExtraction) == 0)
+        {
+            printf("Found a match between Commits!, starting to push!\n");   //loops through directory until we find a mathch between what was sent and what we have (.Commit files)
+            same = true;
 
+        }
+    }
+    closedir(dir);
+       DIR *dir2 = opendir(projectName); //open the directory once more to delete any other potential .Commit files
+    if (!same)
+    {
+        closedir(dir2);
+        printf("Sent Commit file is not the same / does not exist on the server!\n");  //if we did not find a match origianlly, return
+        return;
+    }
+  
     
+    //otherwise loop through and delete all .Commit files that are not equal to the matching one.
+        char commitExt[9];
+        while ((dx = readdir(dir)) != NULL)
+        {
+            if (strcmp(dx->d_name, ".") != 0 && strcmp(dx->d_name, "..") != 0 && strcmp(dx->d_name, commitPath) != 0)
+            {
+               strncpy(commitExt,dx->d_name,8);
+               commitExt[8] = '\0';
+               if (strcmp(commitExt,".Commit")==0){
+                   char path [strlen(projectName)+2+strlen(dx->d_name)];
+                   strcpy(path,projectName);
+                   strcat(path,"/");
+                   strcat(path,dx->d_name);
+                   remove(path);
+               }
+            }
+        }
+
+    //create a path to a new directory called Oldversions
+        char olderVersionsPath[strlen(projectName)+15];
+       
+        strcpy(olderVersionsPath,"olderVersions");
+   
+    //open the directory : if it is null, create one, otherwise continue on
+        DIR *dir3 = opendir(olderVersionsPath);
+        if (!dir3)
+        {
+            printf("Making new Older Versions Directory!\n");
+            mkdir(olderVersionsPath,0777);
+        }
+        char oldProjectsPath[strlen(projectName)+14];
+        strcpy(oldProjectsPath,olderVersionsPath);
+        strcat(oldProjectsPath,"/");
+        strcat(oldProjectsPath,projectName);
+       
+        
+        //do the systems copy call.
+        char copy[200];
+       strcpy(copy,"cp -R ");
+       strcat(copy,projectName);
+       strcat(copy," ");
+      strcat(copy,olderVersionsPath);
+      //printf("%s\n",copy);
+        system(copy);
+      
+        closedir(dir2);
+        closedir(dir3);
+    
+        //Run through manifest and create Nodes
+        //run through commit and look for all "delete files" and "modify" options
+            //find those in the linked list and modify / delete from the linked list
+        //next run through all the add file commands in the commit file
+            // add new nodes to the linked list 
+        //write back to the manifest file while incrementing the proj.version
+        //write out a history file 
+    
+
     
 
 }
