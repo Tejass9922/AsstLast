@@ -433,7 +433,7 @@ char* readInFile(char* fileName)
                 }
                
             }while(status >0);
-           printf("Buffer: %s\n");
+           
             close(fd);
         return buffer; 
     }

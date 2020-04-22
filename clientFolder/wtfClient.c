@@ -357,17 +357,34 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
         recv(socket,temp,8,0); //recieves confirmation
 
+        printf("\n");
 
+       int fd = open(commitFileName,O_RDONLY);
+       char c;
+       int status = 0;
+       char buffer[1000000];
+      
+       int counter = 0;
+       do{
+           status = read(fd,&c,1);
+           if (status<=0)
+            break;
+          buffer[counter] = c;
+          counter++;
+
+       }while (status>0);
+            
+    printf("%s",buffer);
+
+    char*commitBuffer = &buffer[0];
+   
        
-       
+        printf("reached\n");
+      
 
-        char* commitBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(commitFileName))));
-
-        
-        
-        commitBuffer = readInFile(commitFileName); //gets commit file size
+     
         int commitSize = strlen(commitBuffer);
-        printf("%s\n",commitBuffer);
+      
 
         int length = commitSize;
         char size[10];
@@ -379,7 +396,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
        
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
-        send(socket,commitBuffer ,commitSize, 0); //sends the commit buffer using the size of it stores in size 
+        send(socket,commitBuffer ,commitSize, 0); //sends the commit buffer using the size of it stores in size */
 
        
 }
@@ -1575,26 +1592,37 @@ void configure(char* host, char* port){
 
 char* readInFile(char* fileName)
 {
-    char* buffer = malloc(sizeof(char) *1);
+    char* buffer = (char*)(malloc(sizeof(char)*10000));
     char c;
-    int fd = open(fileName,O_RDWR);
+    int fd = open(fileName,O_RDONLY);
     int status;
+    int counter = 0;
     if (fd!=-1){
-    do{
-   
-            status =  read(fd, &c, 1); 
-            if (status<=0){
-                break;
-            }
-            else{   
-                int len = strlen(buffer);
-                buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-                buffer[len] = c;
-                buffer[len+1] = '\0';    
-            }
-        }while(status >0);
-        close(fd);
-    return buffer; 
+        do{
+    
+                status =  read(fd, &c, 1);
+                if (status<=0){
+                    break;
+                }
+                else{   
+                  
+                    
+                   /* int len = strlen(buffer);
+                    char* new_buffer = (char *)malloc((strlen(buffer)+2));
+                    memcpy((void *)new_buffer,(void *)buffer, (size_t)strlen(buffer)+2);
+                    free(buffer);
+                    buffer = new_buffer;
+                    buffer[len] = c;
+                    buffer[len+1] = '\0';*/
+                    buffer[counter] = c;
+                    counter++;
+                  
+                }
+               
+            }while(status >0);
+           printf("Buffer: %s\n");
+            close(fd);
+        return buffer; 
     }
     printf("Cannot open the file");
 }
