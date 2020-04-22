@@ -380,10 +380,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
     char*commitBuffer = &buffer[0];
    
-<<<<<<< HEAD
-=======
    close(fd);
->>>>>>> 50634cf08985486c3c49429949682383f2389c06
        
         printf("reached\n");
       
@@ -1947,6 +1944,28 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
             update(argv[2],socket);
+        }
+        if (strcmp(argv[1],"lock")==0){
+             int socket = connectToServer();
+            char command[5] = "lock";
+            send(socket,command,5,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+            send(socket,argv[2],strlen(argv[2]),0);
+
+            
+        }
+        if (strcmp(argv[1],"lock1")==0){
+             int socket = connectToServer();
+            char command[6] = "lock1";
+            send(socket,command,6,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+            send(socket,argv[2],strlen(argv[2]),0);
+
+            
         }
 
        

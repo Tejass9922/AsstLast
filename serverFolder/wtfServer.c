@@ -17,6 +17,64 @@
 #include <dirent.h>
 #include <openssl/err.h>
 
+//added return statments at the end of each function to make sure locks work properly 
+//check to make sure this did not F anything up lmfaoooo
+
+static pthread_mutex_t projectMutexes[1000];
+
+typedef struct File{
+    char* projectName;
+    struct File* next;
+}File;
+
+
+File* head = NULL;
+
+void addProject(File** head_ref, char* projectName) 
+{ 
+    /* 1. allocate node */
+    File* new_node = (struct File*) malloc(sizeof(File)); 
+  
+    File *last = *head_ref;  /* used in step 5*/
+   
+    /* 2. put in the data  */
+    new_node->projectName  = projectName; 
+  
+    /* 3. This new node is going to be the last node, so make next  
+          of it as NULL*/
+    new_node->next = NULL; 
+  
+    /* 4. If the Linked List is empty, then make the new node as head */
+    if (*head_ref == NULL) 
+    { 
+       *head_ref = new_node; 
+       return; 
+    }   
+       
+    /* 5. Else traverse till the last node */
+    while (last->next != NULL) 
+        last = last->next; 
+    last->next = new_node; 
+    return;     
+} 
+
+int searchProject(File* head, char* projectName)
+{
+    int count = 0;
+    while (head!= NULL)
+    {
+        if (strcmp(head->projectName, projectName) == 0)
+        {
+            return count;
+        }
+        else{
+            head = head->next;
+            count++;
+        }
+    }
+    return -1;
+}
+
 
 
 char* readInFile(char* fileName);
@@ -171,6 +229,8 @@ void checkout(int sock)
         char* STOP = "STOP";
         send(sock,STOP,strlen(STOP),0);
     }
+
+    return;
     
 
 }
@@ -350,7 +410,7 @@ void commit(int socket){
 
         }
         
-        
+        return;
 
 }
 int returnFiles(int sock)
@@ -401,6 +461,8 @@ int returnFiles(int sock)
 
      //write(sock, &c, 1);
     }
+
+    return;
 }
 
 char* readInFile(char* fileName)
@@ -468,6 +530,8 @@ void destroyProject(int sock)
         send(sock,"Project Does not Exist", 22, 0);
         return;
     }
+
+    return;
 }
 
 void createProject(int sock){
@@ -514,9 +578,11 @@ void createProject(int sock){
             printf("\n**Project already Exists**\n");
         }
 
-
+    
     //Now that we made a physical copy of a directory with the given project name on the server with a manifest
     //we are supposed to send that over to the client. How do we send it over? In what format?
+
+    return;
 }
 
 void push(int sock)
@@ -641,7 +707,7 @@ void push(int sock)
         //write back to the manifest file while incrementing the proj.version
         //write out a history file 
     
-
+        return;
     
 
 }
@@ -686,12 +752,19 @@ void update(int socket){
         }
         //might have to recv the .Update file from the client
 
+    return;
 }
 
 void *server_handler (void *fd_pointer);
 
 int main(int argc, char **argv)
 {
+    int i = 0;
+    while (i < 1000)
+    {
+        pthread_mutex_init(&projectMutexes[i], NULL); //initializes all mutexes
+        i++;
+    }
 
     int listenfd, connfd, *new_sock;
     socklen_t clilen;
@@ -828,7 +901,74 @@ void *server_handler (void *fd_pointer)
         printf("got Command for update\n");
         char* replyCommand = "Got The Command for update";
         write(sock, replyCommand, strlen(replyCommand) + 1);  
-        update(sock);
+        update(sock); 
+    }
+    if (strcmp(command, "lock") == 0)
+    {
+        printf("got Command for update\n");
+        char* replyCommand = "Got The Command for lock";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+        char* projName = malloc (sizeof(char) * 30);
+        recv(sock, projName, 30, 0);
+        //printf("%s\n", projName);
+        int mutexPosition = searchProject(head, projName); //check to see if the project exists and what 'place' in the linked list it is in
+        printf("Project Position: %d\n", mutexPosition);
+        if (mutexPosition == -1) //if this is -1 it means the project does not exist
+        {
+            addProject(&head, projName); //adds project to the linked list
+            mutexPosition = searchProject(head, projName); //updates the position of the mutex so that it can be initialized
+            printf("Updated Position: %d\n", mutexPosition); //prints new position of mutex 
+            //all mutexes are initialized in the main method
+            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition]));
+            //pthread_mutex_lock(&projectMutexes[mutexPosition]); //locks the mutex for that specific prjoject
+            File* temp = head;
+            while (temp!= NULL)
+            {
+                printf("%s\n", temp->projectName);
+                temp = temp->next;
+            }
+            printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition]));
+            //pthread_mutex_unlock(&projectMutexes[mutexPosition]); //unlocks the mutex for that specific project
+        }
+        else
+        {
+            printf("Name exists\n");
+        }
+        
+    }
+    if (strcmp(command, "lock1") == 0)
+    {
+        printf("got Command for update\n");
+        char* replyCommand = "Got The Command for lock1";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+        char* projName = malloc (sizeof(char) * 30);
+        recv(sock, projName, 30, 0);
+        //printf("%s\n", projName);
+        int mutexPosition = searchProject(head, projName); //check to see if the project exists and what 'place' in the linked list it is in
+        printf("Project Position: %d\n", mutexPosition);
+        if (mutexPosition == -1) //if this is -1 it means the project does not exist
+        {
+            addProject(&head, projName); //adds project to the linked list
+            mutexPosition = searchProject(head, projName); //updates the position of the mutex so that it can be initialized
+            printf("Updated Position: %d\n", mutexPosition); //prints new position of mutex 
+            //all mutexes are initialized in the main method
+            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition]));
+            //pthread_mutex_lock(&projectMutexes[mutexPosition]); //locks the mutex for that specific prjoject
+            File* temp = head;
+            while (temp!= NULL)
+            {
+                printf("%s\n", temp->projectName);
+                temp = temp->next;
+            }
+            printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition]));
+            //pthread_mutex_unlock(&projectMutexes[mutexPosition]); //unlocks the mutex for that specific project
+        }
+        else
+        {
+            printf("Name exists\n");
+        }
+        
+        
         
     }
     command = malloc (100 * sizeof(char));
