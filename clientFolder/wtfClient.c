@@ -1155,8 +1155,15 @@ void commit(char* projectName, int socket){
 void push(char*projectName,int socket)
 {
 
+        send(socket, projectName, strlen(projectName) + 1, 0); //sends project name
+        char* projectReply = malloc (sizeof(char) * 9);
+        recv(socket, projectReply, 9, 0);
+        printf("%s\n", projectReply);
+
+
+
    
-     char hostbuffer[256]; 
+        char hostbuffer[256]; 
         char *IPbuffer = malloc(16); 
         struct hostent *host_entry; 
         int hostname; 
@@ -1192,24 +1199,26 @@ void push(char*projectName,int socket)
         char NameSize[10];
         sprintf(NameSize,"%d",Namelength); //converts int to char*
 
-        send(socket, NameSize ,strlen(NameSize), 0); //sends size of file name
+        send(socket, NameSize ,strlen(NameSize), 0); //sends size of commit file name
 
-        recv(socket,temp,8,0); //recieved confirmation
+        recv(socket,temp,8,0); //recieved confirmation server got commit file name size
    
 
     
-    send(socket,commitFileName,strlen(commitFileName),0);//sends project name
+    send(socket,commitFileName,strlen(commitFileName),0);//sends commit file name
 
     char* confirmation = malloc (sizeof(char) * 12);
-    recv(socket, confirmation, 12 ,0);
+    recv(socket, confirmation, 12 ,0); //gets confirmation it got the commit file name
     printf("%s\n", confirmation);
 
+    
     /*
     char commitFileName[strlen(projectName)+10];
     strcpy(commitFileName,projectName);
     strcat(commitFileName,"/");
     strcat(commitFileName,".Commit");
     */
+    
 
    int fd = open(commitFileName,O_RDONLY);
    if (fd!=-1){
