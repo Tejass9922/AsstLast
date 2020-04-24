@@ -390,6 +390,7 @@ void commit(int socket){
             char commitNameSize[10];
             recv(socket, commitNameSize, 10, 0); //gets size of file name 
             int NameSize = atoi(commitNameSize); //converts char* to int 
+            printf("Name Size: %d\n", NameSize);
             send(socket,"Got Size", 8 ,0); //sends confirmation
 
             //
@@ -418,12 +419,16 @@ void commit(int socket){
             printf("Client Commit:\n%s", clientCommitFile);
 
             
-            int fd = open(commitPath,O_RDWR|O_CREAT,0777);
+            int commitFD = open(commitPath,O_RDWR|O_APPEND);
+            if (commitFD!=-1){
+                 printf("*Overwriting Commit File**\n");
+            }
+             commitFD = open(commitPath,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);   
             printf("%s\n",commitPath);
             printf("%d\n",commitSize);
-            write(fd,clientCommitFile,commitSize);
+            write(commitFD,clientCommitFile,commitSize);
 
-            close(fd);
+            close(commitFD);
 
 
 
@@ -790,6 +795,7 @@ CommitFile* tokenizeCommit(char*cBuffer){
     char*hash;
     char command;
    char* buffer = (char*)malloc(sizeof(char)*1);
+   buffer[0] = '\0';
     int SNodeLength = 0;
    CommitFile*head = NULL;
     while (i<strlen(cBuffer))
@@ -802,6 +808,7 @@ CommitFile* tokenizeCommit(char*cBuffer){
             {
                  command = buffer[0];
                  buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
@@ -1099,17 +1106,13 @@ void push(int sock)
         char*buff = readInFile(path);
        //printf("%s\n",buff);
         server =  tokenizeManifest(server,buff);
-      /*  CommitFile*commitHead = NULL;
+        CommitFile*commitHead = NULL;
         commitHead = tokenizeCommit(clientCommitFile);
     
        
-    */ 
+    
    File*temp = server.fileHead;
-       while (temp!=NULL) {
-           
-         //  printf("%d\n",temp->version);
-           temp =temp->next;
-       }
+      
     
        // applyChanges(manifestHead,commitHead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
 
