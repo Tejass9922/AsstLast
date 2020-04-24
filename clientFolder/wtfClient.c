@@ -1902,7 +1902,7 @@ int main(int argc, char **argv)
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //recieves confirmation that server got the command
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
             
@@ -1924,7 +1924,7 @@ int main(int argc, char **argv)
             recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
@@ -1953,7 +1953,7 @@ int main(int argc, char **argv)
             recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
@@ -1973,12 +1973,13 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                printf("check here\n");
                 return;
             }
 
@@ -1992,7 +1993,7 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
@@ -2011,7 +2012,7 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
@@ -2030,7 +2031,7 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
@@ -2049,7 +2050,7 @@ int main(int argc, char **argv)
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]), 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 

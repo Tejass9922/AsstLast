@@ -1375,25 +1375,27 @@ void *server_handler (void *fd_pointer)
         char* projectName = malloc(sizeof(char) * 50);
         recv(sock, projectName, 50, 0); //gets project name and stores it in projectName variable
         
-
+        printf("reached1\n");
         DIR *dp = opendir(projectName);
         if(!dp){
+            printf("reached2\n");
             char* replyName = "DNE";
             send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
             return;
         }
         else{
+            printf("reached3\n");
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
-           
+            printf("reached4\n");
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
                 addProject(&head, projectName); //adds project to the linked list
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
-
+            
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             push(sock); 
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
