@@ -220,6 +220,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         if (client.ProjectVersion != server.ProjectVersion)
         {
             printf("Update Local Project\n");
+            send(socket,"Stop\0",5,0);
             return;
         }
         int commitFD = open(commitFileName,O_RDWR|O_APPEND);
@@ -289,7 +290,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                           //modify code
                           
                           printf("M %d %s %s\n",++cheadTemp->version,cheadTemp->filePath,cheadTemp->hash); 
-                          checkTest = true;
+                         
                           writeCommit(commitFD,cheadTemp->version,cheadTemp->filePath,liveHash,'M');//if livehash is not the same as client hash 
                         }
                     }  
@@ -301,7 +302,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                         //delete .commit file if it exists
                        
                     }
-               
+                     checkTest = true;
                 }  
                
                 else if ((sheadTemp->next==NULL)&&(checkTest==false))
@@ -470,15 +471,16 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
            
         int addCheck = 0;
         int count1 = 0;
-        
+        bool checkTest = false;
         //printf("%d\t%d\n",cNodeLength,sNodeLength);
         while(cheadTemp != NULL)//iterates thrr client nodes 
         {
-           
+           checkTest = false;
             int count2 = 0;
             sheadTemp = server.fileHead;
             while (sheadTemp != NULL)//iterates thru sever nodes 
             {
+
                 if (strcmp(cheadTemp->filePath, sheadTemp->filePath) == 0)//compares client file name server file name
                 {   
                     
@@ -489,6 +491,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
                         if (strcmp(cheadTemp->hash,liveHash)==0){ //check to see if live hash of client file is different than stored hash
                          //modify code
                           printf("M %d %s %s\n",sheadTemp->version,sheadTemp->filePath,sheadTemp->hash); //if live hash of client file is different than stored hash adds a modify line 
+                         
                           writeUpdate(updateFD,sheadTemp->version,sheadTemp->filePath,sheadTemp->hash,'M');
                          //write Update file
                         }
@@ -500,12 +503,13 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
                         }
 
                   }       
-                 addCheck = 1;
+                 checkTest = true;
                 }  
                
-                 if ((sheadTemp->next==NULL)&&(addCheck==0)){
+                 if ((sheadTemp->next==NULL)&&(checkTest==false)){
                    printf("D %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
                    writeUpdate(updateFD,cheadTemp->version,cheadTemp->filePath,cheadTemp->hash,'D');
+                   checkTest = true;
                  }
                  addCheck = 0;
                 sheadTemp = sheadTemp->next;
@@ -514,20 +518,21 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
             cheadTemp = cheadTemp->next;
             
         }
-
+        checkTest = false;
         addCheck = 0;
         count1 = 0;
         while (sheadTemp2 != NULL)
         {
             int count2 = 0;
             cheadTemp2 = client.fileHead;
+            checkTest = false;
             while (cheadTemp2 != NULL)//iterates thru client nodes 
             {
                
                 if (strcmp(cheadTemp2->filePath, sheadTemp2->filePath) == 0) //check server name and client name 
                 {
                   
-                    addCheck = 1;
+                    checkTest = true;
                 }
                 
                // printf("%d\n",addCheck);
@@ -619,6 +624,7 @@ void currentVersion(char* projectName, int socket)
 File* tokenizeClientManifest(File*cHead,char*clientBuffer){
     int i=0;
    char* buffer = (char*)malloc(sizeof(char)*1);
+   buffer[0] = '\0';
     while (clientBuffer[i]!='\n'){
         int len = strlen(buffer);
         buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
@@ -637,6 +643,7 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
     //char*hash;
     int cNodeLength = 0;
     buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
 
     while (i<strlen(clientBuffer))
     {
@@ -647,6 +654,7 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
                  version = atoi(buffer);
                  //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
@@ -657,6 +665,7 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
                //mem move gets ride of extra space at the beginning 
                //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             else if (count==2)
@@ -666,6 +675,7 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             //printf("Count: %d\n", count);
@@ -680,6 +690,8 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
             insertFileNode(&cHead, tempNode);
             cNodeLength++;
             count = 0;
+           buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
            
         }
         else

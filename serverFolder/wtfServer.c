@@ -389,11 +389,18 @@ void commit(int socket){
 
             char commitNameSize[10];
             recv(socket, commitNameSize, 10, 0); //gets size of file name 
+
+            if (strcmp(commitNameSize, "Stop") == 0)
+            {
+                printf("Project versions are different\n");
+                return;
+            }
+
             int NameSize = atoi(commitNameSize); //converts char* to int 
             printf("Name Size: %d\n", NameSize);
             send(socket,"Got Size", 8 ,0); //sends confirmation
 
-            //
+         
 
             char* commitPath = malloc(NameSize); //mallocs size for filename 
 
