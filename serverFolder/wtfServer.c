@@ -19,7 +19,7 @@
 
 //added return statments at the end of each function to make sure locks work properly 
 //check to make sure this did not F anything up lmfaoooo
-
+//test
 static pthread_mutex_t projectMutexes[1000];
 
 typedef struct Project{
