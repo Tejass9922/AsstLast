@@ -723,8 +723,8 @@ File* tokenizeManifest(char* clientBuffer)
    
    int count = 0;
    int version;
-   char*hash;
-   char*filePath;
+   char* hash;
+   char* filePath;
     //char*filePath;
     //char*hash;
     int cNodeLength = 0;
@@ -1047,6 +1047,7 @@ void push(int sock)
        projVersion[len] = c;
        projVersion[len+1] = '\0';    
     }
+    printf("projVersion: %s", projVersion);
     close(fd);
 
     
@@ -1100,7 +1101,7 @@ void push(int sock)
 
                 cHead = tokenizeManifest(buff);
        
-       File* temp = cHead;
+        File* temp = cHead;
          while (temp!= NULL)
         {
             printf("%d\t%s\t%s\n", temp->version, temp->filePath, temp->hash);
