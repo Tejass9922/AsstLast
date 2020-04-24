@@ -47,6 +47,7 @@ typedef struct CommitFile{
 typedef struct Manifest{
     int ProjectVersion;
     struct File* fileHead; 
+    struct Manifest* ptr;
 }Manifest;
 
 void addProject(Project** head_ref, char* projectName) 
@@ -528,6 +529,7 @@ char* readInFile(char* fileName)
             close(fd);
 
             char*nB  = buffer;
+         
            
         return nB; 
     }
@@ -692,22 +694,24 @@ CommitFile* createCommitFileNode(char command, int version, char* filePath, char
     temp->hash = hash;
     return temp;
 }
-Manifest tokenizeManifest(Manifest server,char*clientBuffer)
+File* tokenizeManifest(char* clientBuffer)
 {
-
+    
+   
+   
    char projectVersionBuff[10];
    int counter = 0;
-    File*cHead = server.fileHead;
+    File* cHead = NULL;//= server->fileHead;
     int i=0;
     char* buffer = malloc(sizeof(char) * 2);
 
     
    buffer[0] = '\0';
      int len = strlen(buffer);
-     printf("Length check %d\n",len);
+   
     while (clientBuffer[i]!='\n'){
         buffer = realloc(buffer,(len+ 2)*sizeof(char));
-        printf("%c\n",clientBuffer[i]);
+       
         buffer[len] = clientBuffer[i];
         buffer[len+1] = '\0';
         i++;
@@ -715,8 +719,7 @@ Manifest tokenizeManifest(Manifest server,char*clientBuffer)
     i++;
     int projVersion = atoi(buffer);
     projVersion++;
-    server.ProjectVersion = projVersion;
-    printf("Project Version CHeck %s\n",buffer);
+  
    
    int count = 0;
    int version;
@@ -734,7 +737,7 @@ Manifest tokenizeManifest(Manifest server,char*clientBuffer)
             
             if (count==0)
             {
-                printf("%s\n",buffer);
+              
                  version = atoi(buffer);
                 // printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
@@ -776,7 +779,7 @@ Manifest tokenizeManifest(Manifest server,char*clientBuffer)
             count = 0;
              buffer = malloc(sizeof(char) *1);
                 buffer[0] = '\0';
-           
+            
         }
         else
         {
@@ -789,9 +792,14 @@ Manifest tokenizeManifest(Manifest server,char*clientBuffer)
         
     }
 
-    server.fileHead = cHead;
+    File*temp = cHead;
+    printf("reached\n");
+      
 
-    return server;
+    return cHead;
+     
+   
+  
 }
 
 CommitFile* tokenizeCommit(char*cBuffer){
@@ -1031,7 +1039,7 @@ void push(int sock)
         int status; 
         char c;
         char*projVersion = (char*)(malloc(sizeof(char)*1));
-
+        projVersion[0] = '\0';
     while (c!='\n'){
        read(fd,&c,1);
        int len = strlen(projVersion);
@@ -1042,7 +1050,7 @@ void push(int sock)
     close(fd);
 
     
-        char oldProjectsPath[strlen(projectName)+16+strlen(projVersion)+strlen(projectName)+strlen(projVersion)+2+9];
+        char oldProjectsPath[14+(2*(strlen(projectName)))+strlen(projVersion)+4];
         strcpy(oldProjectsPath,olderVersionsPath);
         strcat(oldProjectsPath,"/");
         strcat(oldProjectsPath,projectName);
@@ -1057,23 +1065,7 @@ void push(int sock)
        
 
        int check2 = mkdir(olderVersionsPath,0777);
-        //int check = mkdir(oldProjectsPath, 0777);
-
-        
-        //printf("Before: OlderVersionsPath: %s\n", olderVersionsPath);
-       // printf("Before: oldProjectsPath: %s\n", oldProjectsPath);
-
-       // printf("Directory: %d\n", check2 );
-
-        
-       
-
       
-       //mkdir old version 
-       //mkdir(olderVersionsPath,0777);
-       //copy 
-        
-        //do the systems copy call.
         char copy[200];
        strcpy(copy,"cp -R ");
        strcat(copy,projectName);
@@ -1082,20 +1074,40 @@ void push(int sock)
      // printf("%s\n",copy);
         system(copy);
 
-    
-
-        
-
-      //  printf("OlderVersionsPath: %s\n", olderVersionsPath);
-      //  printf("oldProjectsPath: %s\n", oldProjectsPath);
-    
-
-
-      ///ilab/users/ts880/cs214/AsstLast/AsstLast/serverFolder/olderVersions
         closedir(dir2);
-        closedir(dir3);
-        //closedir(check);
+        closedir(dir3); 
+         char  path[strlen(projectName)+11];
+        strcpy(path,projectName);
+        strcat(path,"/.Manifest");
+        char*buff = readInFile(path); 
     
+        int i=0;
+                char*buffer = (char*)(malloc(sizeof(char)*1));
+                buffer[0] = '\0';
+                 while (buff[i]!='\n'){
+                    int len = strlen(buffer);
+                    buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                    buffer[len] = buff[i];
+                    buffer[len+1] = '\0';
+                    i++;
+                }
+                 i++;
+                int manifestVersion = atoi(buffer);
+                manifestVersion++;
+                 buffer = (char*)(malloc(sizeof(char)*1));
+               
+                File* cHead = NULL;
+
+                cHead = tokenizeManifest(buff);
+       
+       File* temp = cHead;
+         while (temp!= NULL)
+        {
+            printf("%d\t%s\t%s\n", temp->version, temp->filePath, temp->hash);
+            temp = temp->next;
+        }
+
+
         //Run through manifest and create Nodes
         //run through commit and look for all "delete files" and "modify" options
             //find those in the linked list and modify / delete from the linked list
@@ -1103,30 +1115,15 @@ void push(int sock)
             // add new nodes to the linked list 
         //write back to the manifest file while incrementing the proj.version
         //write out a history file 
-    
-         Manifest server;
-        File*manifestHead;
-
-        char  path[strlen(projectName)+11];
-        strcpy(path,projectName);
-        strcat(path,"/.Manifest");
-        char*buff = readInFile(path);
-       //printf("%s\n",buff);
-        server =  tokenizeManifest(server,buff);
-        CommitFile*commitHead = NULL;
-        commitHead = tokenizeCommit(clientCommitFile);
-    
        
-    
-   File*temp = server.fileHead;
-      
-    
+       // CommitFile*commitHead = NULL;
+        //commitHead = tokenizeCommit(clientCommitFile);
        // applyChanges(manifestHead,commitHead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
 
     
-        return;
+       
     
-
+ return;
 }
 
 void update(int socket){
@@ -1373,27 +1370,25 @@ void *server_handler (void *fd_pointer)
         char* projectName = malloc(sizeof(char) * 50);
         recv(sock, projectName, 50, 0); //gets project name and stores it in projectName variable
         
-        printf("reached1\n");
+
         DIR *dp = opendir(projectName);
         if(!dp){
-            printf("reached2\n");
             char* replyName = "DNE";
             send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
             return;
         }
         else{
-            printf("reached3\n");
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
-            printf("reached4\n");
+           
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
                 addProject(&head, projectName); //adds project to the linked list
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
-            
+
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             push(sock); 
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
