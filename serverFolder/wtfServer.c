@@ -868,10 +868,10 @@ CommitFile* tokenizeCommit(char*cBuffer){
 
 void applyChanges(File*manifestHead,CommitFile*commitHead)
 {
-    File*mHead = manifestHead;
+    File* mHead = manifestHead;
     CommitFile*cHead = commitHead;
     while (cHead!=NULL){
-        if ((cHead->command=='M') ||(cHead->command=='D'))
+        if ((cHead->command=='M') || (cHead->command=='D'))
         {
             while (mHead!=NULL)
             {
@@ -1237,8 +1237,6 @@ int main(int argc, char **argv)
   
    //close(connfd);
 }
-
-//void addNametoList(File* head )
 
 void *server_handler (void *fd_pointer)
 {
