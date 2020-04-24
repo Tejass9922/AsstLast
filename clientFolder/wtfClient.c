@@ -1897,8 +1897,8 @@ int main(int argc, char **argv)
         }
         if (strcmp(argv[1],"create")==0){
             int socket =  connectToServer();
-            char command[6] = "create";
-            send(socket,command,6,0);//sends command to create Check
+            char command[7] = "create";
+            send(socket,command,7,0);//sends command to create Check
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //recieves confirmation that server got the command
 
@@ -1918,8 +1918,8 @@ int main(int argc, char **argv)
         }
         if (strcmp(argv[1],"destroy")==0){
             int socket =  connectToServer();
-            char command[7] = "destroy";
-            send(socket,command,7,0);
+            char command[8] = "destroy";
+            send(socket,command,8,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
@@ -1947,8 +1947,8 @@ int main(int argc, char **argv)
         
         if (strcmp(argv[1],"commit")==0){
             int socket =  connectToServer();
-            char command[6] = "commit";
-            send(socket,command,6,0);
+            char command[7] = "commit";
+            send(socket,command,7,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0);
             printf("Reply: %s\n", reply);
@@ -1979,7 +1979,6 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
-                printf("check here\n");
                 return;
             }
 
@@ -2044,13 +2043,13 @@ int main(int argc, char **argv)
         }
         if (strcmp(argv[1],"update")==0){
              int socket = connectToServer();
-            char command[9] = "update";
-            send(socket,command,9,0);
+            char command[7] = "update";
+            send(socket,command,7,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
 
-            send(socket, argv[2], strlen(argv[2]) + 1, 0); //sends name of the file to be created to check server list
+            send(socket, argv[2], strlen(argv[2]) + 1 , 0); //sends name of the file to be created to check server list
             reply = malloc(50* sizeof(char));
             recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
