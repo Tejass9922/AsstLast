@@ -79,6 +79,7 @@ void insertFileNode(File **head, File *newNode)
 }
 void deleteNode(File **head_ref, char* key) 
 { 
+    printf("Key: %s\n",key);
     // Store head node 
     File* temp = *head_ref, *prev; 
   
@@ -659,7 +660,7 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
             }
             else if (count==1)
             {
-               filePath = malloc(strlen(buffer));
+               filePath = malloc(strlen(buffer)+1);
                strcpy(filePath,buffer);
                memmove(filePath, filePath+1, strlen(filePath));
                //mem move gets ride of extra space at the beginning 
@@ -670,7 +671,7 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
             }
             else if (count==2)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer)+1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
@@ -771,7 +772,7 @@ void update(char* projectName, int socket){
             }
             else if (count==1)
             {
-               filePath = malloc(strlen(buffer));
+               filePath = malloc(strlen(buffer)+1);
                strcpy(filePath,buffer);
                memmove(filePath, filePath+1, strlen(filePath));
                //mem move gets ride of extra space at the beginning 
@@ -781,7 +782,7 @@ void update(char* projectName, int socket){
             }
             else if (count==2)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer)+1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
@@ -871,7 +872,7 @@ void update(char* projectName, int socket){
             }
             else if (count==1)
             {
-               filePath = malloc(strlen(buffer));
+               filePath = malloc(strlen(buffer)+1);
                strcpy(filePath,buffer);
                memmove(filePath, filePath+1, strlen(filePath));
                //mem move gets ride of extra space at the beginning 
@@ -881,7 +882,7 @@ void update(char* projectName, int socket){
             }
             else if (count==2)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer)+1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
@@ -1005,7 +1006,7 @@ void commit(char* projectName, int socket){
             }
             else if (count==1)
             {
-               filePath = malloc(strlen(buffer));
+               filePath = malloc(strlen(buffer)+1);
                strcpy(filePath,buffer);
                memmove(filePath, filePath+1, strlen(filePath));
                //mem move gets ride of extra space at the beginning 
@@ -1015,7 +1016,7 @@ void commit(char* projectName, int socket){
             }
             else if (count==2)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer)+1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
@@ -1105,7 +1106,7 @@ void commit(char* projectName, int socket){
             }
             else if (count==1)
             {
-               filePath = malloc(strlen(buffer));
+               filePath = malloc(strlen(buffer)+1);
                strcpy(filePath,buffer);
                memmove(filePath, filePath+1, strlen(filePath));
                //mem move gets ride of extra space at the beginning 
@@ -1115,7 +1116,7 @@ void commit(char* projectName, int socket){
             }
             else if (count==2)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer)+1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
@@ -1438,12 +1439,20 @@ void removeFile(char*projectName,char*fileName)
                 File* cHead = NULL;
 
                 cHead = tokenizeClientManifest(cHead,clientManifest);
+            
                 if (cHead==NULL){
                     printf("**Empty Manifest File!**\n");
                     return;
                 }   
+
                 reverse(&cHead);
+                File* temp = cHead;
+                
                 deleteNode(&cHead,targetFilePath); 
+               /* while(temp!=NULL){
+                    printf("%d\t%s\t%s\n",temp->version,temp->filePath,temp->hash);
+                    temp = temp->next;
+                }*/
                 close(fd);
 
                 int newOpen = open(manifest,O_RDWR|O_TRUNC|O_APPEND);
