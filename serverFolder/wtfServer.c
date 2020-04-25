@@ -1119,7 +1119,7 @@ void push(int sock)
        
        // CommitFile*commitHead = NULL;
         //commitHead = tokenizeCommit(clientCommitFile);
-       // applyChanges(manifestHead,commitHead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
+        //applyChanges(manifestHead,chead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
 
     
        
