@@ -773,6 +773,7 @@ File* tokenizeManifest( File* cHead, char* clientBuffer)
     return cHead;
 }
 
+
 CommitFile* tokenizeCommit(char*cBuffer){
     int i=0;
     int count = 0;
@@ -893,7 +894,7 @@ void applyChanges(File*manifestHead,CommitFile*commitHead, int manFD)
             {
                 if(cHead1->command == 'M')
                 {
-                   printf("Modify %d\t%s\t%s\n", cHead1->version, cHead1->filePath, cHead1->hash);
+                   //printf("Modify %d\t%s\t%s\n", cHead1->version, cHead1->filePath, cHead1->hash);
                    writeManifest(cHead1->version, cHead1->filePath, cHead1->hash, manFD);
                    
                 }
@@ -902,7 +903,7 @@ void applyChanges(File*manifestHead,CommitFile*commitHead, int manFD)
             }
             else if((cHead1->next == NULL) && (addCheck == 0))
             {
-               printf("Keep %d\t%s\t%s\n", mHead1->version, mHead1->filePath, mHead1->hash);
+               //printf("Keep %d\t%s\t%s\n", mHead1->version, mHead1->filePath, mHead1->hash);
                addCheck = 1;
             }
             cHead1 = cHead1->next;
@@ -918,7 +919,7 @@ void applyChanges(File*manifestHead,CommitFile*commitHead, int manFD)
     {
         if (cHead2->command == 'A')
         {
-            printf("Add %d\t%s\t%s\n", cHead2->version, cHead2->filePath, cHead2->hash);
+            //printf("Add %d\t%s\t%s\n", cHead2->version, cHead2->filePath, cHead2->hash);
             writeManifest(cHead2->version, cHead2->filePath, cHead2->hash, manFD);
         }
         cHead2 = cHead2->next;
@@ -1119,6 +1120,14 @@ void push(int sock)
               
                 manifestHead = tokenizeManifest(manifestHead,buff);
 
+                File* tempMan = manifestHead;
+
+                while (tempMan != NULL)
+                {
+                    //printf("Node: %d %s %s\n", tempMan->version, tempMan->filePath, tempMan->hash);
+                    tempMan = tempMan->next;
+                }
+
        
       /* File* temp = cHead;
         while (temp!= NULL)
@@ -1141,6 +1150,7 @@ void push(int sock)
 
         CommitFile* temp = commitHead;
 
+
     int manFD = open(manifestPath,O_RDWR|O_APPEND);
     if (manFD!=-1){
         printf("*Overwriting Manifest File**\n");
@@ -1157,8 +1167,31 @@ void push(int sock)
 
     close(manFD);
 
+    CommitFile* cHead2 = commitHead;
+    while (cHead2 !=NULL)
+    {
+        if ((cHead2->command == 'A') || (cHead2->command == 'M'))
+        {
+            char* fileSize = malloc (sizeof(char) * 10);
+            fileSize[0] = '\0';
+            recv(sock, fileSize, 10, 0); //gets size of file buffer 
+            send(sock, "Confirm", 8, 0); //sends confirmation it got the file size 
 
-    CommitFile*tempCHead = commitHead;
+            int size = atoi(fileSize);
+
+            printf("Length: %d\n", size);
+
+            char* fileBuffer = malloc(sizeof(char) * size);
+            recv(sock, fileBuffer, size+1, 0); //gets file buffer
+            send(sock, "Confirm", 8, 0); //sends confirmation it got the file buffer 
+
+            printf("fileBuffer: %s\n", fileBuffer);
+
+            
+        }
+
+        cHead2 = cHead2->next;
+    }
 
     /*
     if (tempCHead == NULL)

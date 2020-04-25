@@ -1390,46 +1390,45 @@ void push(char*projectName,int socket)
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
 
 
-/*
-    char* prompt = (char*)(malloc(sizeof(char)*5));
-    prompt[0] = '\0';
-    recv(socket, prompt, 5, 0); //gets command to either stop or start file loop
-    if (strcmp(prompt, "STOP") == 0) 
+    CommitFile* cHead2 = commitHead;
+    while (cHead2 !=NULL)
     {
-        printf("No Commits to be made\n"); //got command to stop 
+        if ((cHead2->command == 'A') || (cHead2->command == 'M'))
+        {
+            char* fileBuffer = readInFile(cHead2->filePath); //puts file into a buffer
+
+            int fileSize = strlen(fileBuffer); //gets file buffer size
+
+            printf("Length: %d\n", fileSize);
+
+            char* charFileSize = malloc(sizeof(char) * 10); 
+            charFileSize[0] = '\0';
+            
+            sprintf(charFileSize, "%d", fileSize); //converts int to char* 
+            send(socket, charFileSize, strlen(charFileSize)+1, 0); //sends size of file buffer 
+        
+            char* reply = malloc(sizeof(char) * 8);
+            recv(socket, reply, 8, 0); //gets confirmation
+
+
+            send(socket, fileBuffer, strlen(fileBuffer)+1, 0); //sends actual file buffer 
+            reply = malloc(sizeof(char) * 8);
+            recv(socket, reply, 8, 0); //gets confirmation
+
+            printf("fileBuffer: %s\n", fileBuffer);
+
+
+
+
+        }
+
+        cHead2 = cHead2->next;
     }
-    else
-    {
-        send(socket, "Confirm", 8, 0); //process will start and sends confirmation
-    }
+        
+
     
 
 
-    while (strcmp(prompt, "STOP") != 0)
-    {
-        char pathSize[10];
-        recv(socket, pathSize, 10, 0); //gets the file name length
-        int pathLength = atoi(pathSize); //
-        send(socket, "Confirm", 8, 0); //sends confirmation it got the file name length
-
-        char* path = malloc(sizeof(char) * pathLength);
-        recv(socket, path, pathLength, 0) ;//gets file name 
-
-        char* fileBuffer = readInFile(path);
-
-        recv(socket, prompt, 5, 0); 
-        char pathSize[10];
-
-        */
-
-       
-
-        
-
-    }
-    
-
-        
    }
 
   
