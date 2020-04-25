@@ -703,8 +703,8 @@ File* tokenizeManifest( File* cHead, char* clientBuffer)
    
    int count = 0;
    int version;
-   char* hash;
-   char* filePath;
+   char*hash;
+   char*filePath;
     //char*filePath;
     //char*hash;
     int cNodeLength = 0;
@@ -863,19 +863,14 @@ CommitFile* tokenizeCommit(char*cBuffer){
 
 File* applyChanges(File*manifestHead,CommitFile*commitHead)
 {
-    File* mHead = manifestHead;
+    File*mHead = manifestHead;
     CommitFile*cHead = commitHead;
-<<<<<<< HEAD
-    while (cHead!=NULL){
-        if ((cHead->command=='M') || (cHead->command=='D'))
-=======
 
     //hce
 
     while (cHead!=NULL)
     {
         if ((cHead->command=='M') ||(cHead->command=='D'))
->>>>>>> 9d7c6fc09301b8d460fff81d584ceb27a8802fbf
         {
             while (mHead!=NULL)
             {
@@ -1059,12 +1054,7 @@ void push(int sock)
        projVersion[len] = c;
        projVersion[len+1] = '\0';    
     }
-<<<<<<< HEAD
-    printf("projVersion: %s", projVersion);
-    close(fd);
-=======
         close(fd);
->>>>>>> 9d7c6fc09301b8d460fff81d584ceb27a8802fbf
 
     
         char oldProjectsPath[14+(2*(strlen(projectName)))+strlen(projVersion)+4];
@@ -1119,13 +1109,8 @@ void push(int sock)
                 manifestHead = tokenizeManifest(manifestHead,buff);
 
        
-<<<<<<< HEAD
-        File* temp = cHead;
-         while (temp!= NULL)
-=======
       /* File* temp = cHead;
         while (temp!= NULL)
->>>>>>> 9d7c6fc09301b8d460fff81d584ceb27a8802fbf
         {
             printf("%d\t%s\t%s\n", temp->version, temp->filePath, temp->hash);
             temp = temp->next;
@@ -1145,13 +1130,7 @@ void push(int sock)
 
         CommitFile* temp = commitHead;
        
-<<<<<<< HEAD
-       // CommitFile*commitHead = NULL;
-        //commitHead = tokenizeCommit(clientCommitFile);
-        //applyChanges(manifestHead,chead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
-=======
        // applyChanges(manifestHead,commitHead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
->>>>>>> 9d7c6fc09301b8d460fff81d584ceb27a8802fbf
 
     
        
@@ -1267,6 +1246,8 @@ int main(int argc, char **argv)
   
    //close(connfd);
 }
+
+//void addNametoList(File* head )
 
 void *server_handler (void *fd_pointer)
 {
