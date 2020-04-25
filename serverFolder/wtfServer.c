@@ -927,6 +927,38 @@ void applyChanges(File*manifestHead,CommitFile*commitHead, int manFD)
 
 
 }
+
+void makeDirs(char* path){      //making directories on server side up till the path that is given. Used in push.
+
+    char*buffer = malloc(sizeof(char)*1);
+    buffer[0]= '\0';
+    int i = 0;
+  
+    while (i<strlen(path))
+    {
+        if (path[i]=='/'){
+            struct stat sb;
+            if (!(stat(buffer, &sb) == 0 && S_ISDIR(sb.st_mode))) {
+               mkdir(buffer,0777);
+            }       
+            
+        }
+       
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = path[i];
+            buffer[len+1] = '\0';
+            
+        
+    i++;
+    }
+}
+
+void writeNewFiles(int fd,char*fileBuffer,bool empty){
+//check if empty buffer first
+if (!empty)
+    write(fd,fileBuffer,strlen(fileBuffer));
+}
 void push(int sock)
 {
     /*
@@ -1172,6 +1204,9 @@ void push(int sock)
     {
         if ((cHead2->command == 'A') || (cHead2->command == 'M'))
         {
+
+        
+            makeDirs(cHead2->filePath);
             char* fileSize = malloc (sizeof(char) * 10);
             fileSize[0] = '\0';
             recv(sock, fileSize, 10, 0); //gets size of file buffer 
@@ -1186,53 +1221,23 @@ void push(int sock)
             send(sock, "Confirm", 8, 0); //sends confirmation it got the file buffer 
 
             printf("fileBuffer: %s\n", fileBuffer);
-
-            
+            int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);
+            writeNewFiles(fd,fileBuffer,false);
+            close(fd);
         }
 
         cHead2 = cHead2->next;
     }
 
-    /*
-    if (tempCHead == NULL)
+    CommitFile* cHead3 = commitHead;
+    while (cHead3!=NULL)
     {
-        send(sock, "STOP", 5, 0);
-        print("No commit to be made\n");
-        return;
+       if ((cHead3->command)=='D'){
+           remove(cHead3->filePath);
+       }
+      cHead3 =  cHead3->next;
     }
-    else{
-        send(sock, "GOOO", 6, 0); //send  command to start
-        char* reply = malloc(sizeof(char) * 8); 
-        recv(sock, reply, 8, 0); //get confirmation
-    }
-
-    while (tempCHead != NULL)
-    {
-        if (tempCHead->command == 'A' || tempCHead->command == 'M')
-        {
-            int pathSize = strlen(tempCHead->filePath) + 1; //gets path length 
-            char* charPathSize = malloc(sizeof(char) * 10); 
-            sprintf(charPathSize, "%d", pathSize); //converts int to char* 
-            send(sock, pathSize, strlen(charPathSize)+1, 0); //sends path length as char* 
-            char* reply = malloc(sizeof(char) * 8); 
-            recv(sock, reply, 8, 0); //get confirmation
-
-            send(sock, tempCHead->filePath, strlen(tempCHead->filePath) + 1, 0); //sends file path 
-
-            recv(sock, reply, 8, 0); //get confirmation
-
-            
-
-
-        }
-    }
-    */
-
-    
-
-    
-       
-    
+ 
  return;
 }
 

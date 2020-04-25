@@ -1425,17 +1425,11 @@ void push(char*projectName,int socket)
         cHead2 = cHead2->next;
     }
         
-
+    
     
 
 
    }
-
-  
-      
-            
-  
-
    
   
   //active commit? does that mean commit file per project on the server? or just one total commit file at a time? 
