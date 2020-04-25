@@ -853,67 +853,78 @@ CommitFile* tokenizeCommit(char*cBuffer){
     }
     printf("Commit reached 1\n");
      CommitFile* temp = head;
-        while (temp!= NULL)
+        /*while (temp!= NULL)
         {
             printf("%c\t%d\t%s\t%s\n",temp->command, temp->version, temp->filePath, temp->hash);
             temp = temp->next;
         }
+        */
     return head;
 }
 
-File* applyChanges(File*manifestHead,CommitFile*commitHead)
+void writeManifest(int version,char*filePath, char*hash, int fd){
+    char sp = ' ';
+    char nL = '\n';
+    char versionBuff[20];
+    sprintf(versionBuff,"%d",version);
+    write(fd,versionBuff,strlen(versionBuff));
+    write(fd,&sp,1);
+    write(fd,filePath,strlen(filePath));
+    write(fd,&sp,1);
+    write(fd,hash,strlen(hash));
+    write(fd,&sp,1);
+    write(fd,&nL,1);
+
+}
+
+void applyChanges(File*manifestHead,CommitFile*commitHead, int manFD)
 {
-    File*mHead = manifestHead;
-    CommitFile*cHead = commitHead;
-
-    //hce
-
-    while (cHead!=NULL)
+   File* mHead1 = manifestHead;
+   CommitFile* cHead1 = commitHead;
+    int addCheck = 1;
+    while (mHead1 != NULL)
     {
-        if ((cHead->command=='M') ||(cHead->command=='D'))
+        addCheck = 0;
+        cHead1 = commitHead;
+        while (cHead1 != NULL)
         {
-            while (mHead!=NULL)
+            //printf("%s\n", cHead1->filePath);
+            if (strcmp(mHead1->filePath, cHead1->filePath) == 0)
             {
-                if (strcmp(mHead->filePath,cHead->filePath)==0){
-                    if (cHead->command=='M')
-                    {
-                        mHead->hash = (char*)(malloc(sizeof(char)*(strlen(cHead->hash)+1)));
-                        strcpy(mHead->hash,cHead->hash);
-                        mHead->version = cHead->version;
-                        
-
-                    }
-                    else
-                    {
-                        deleteNode(&mHead,mHead->filePath);
-                    if (mHead==NULL)
-                        break;
-                    }
+                if(cHead1->command == 'M')
+                {
+                   printf("Modify %d\t%s\t%s\n", cHead1->version, cHead1->filePath, cHead1->hash);
+                   writeManifest(cHead1->version, cHead1->filePath, cHead1->hash, manFD);
+                   
                 }
-                mHead = mHead->next;
+                addCheck = 1;
+
             }
+            else if((cHead1->next == NULL) && (addCheck == 0))
+            {
+               printf("Keep %d\t%s\t%s\n", mHead1->version, mHead1->filePath, mHead1->hash);
+               addCheck = 1;
+            }
+            cHead1 = cHead1->next;
         }
-        cHead = cHead->next;
-       
+        mHead1 = mHead1 ->next;
     }
-    File*mhead2 = manifestHead;
+
+    File* mHead2 = manifestHead;
     CommitFile* cHead2 = commitHead;
 
-    while (cHead2!=NULL)
+   
+    while (cHead2 !=NULL)
     {
-        if (cHead2->command=='A')
+        if (cHead2->command == 'A')
         {
-            File*temp = createFileNode(cHead2->version,cHead2->filePath,cHead2->hash);
-            insertFileNode(&manifestHead,temp);
+            printf("Add %d\t%s\t%s\n", cHead2->version, cHead2->filePath, cHead2->hash);
+            writeManifest(cHead2->version, cHead2->filePath, cHead2->hash, manFD);
         }
+        cHead2 = cHead2->next;
     }
 
-    File*temp = manifestHead;
-    while (temp!=NULL){
-        printf("%d\t%s\t%s",temp->version,temp->filePath,temp->hash);
-        temp = temp->next;
-    }
-    return manifestHead;
+
 }
 void push(int sock)
 {
@@ -1129,8 +1140,24 @@ void push(int sock)
         commitHead = tokenizeCommit(clientCommitFile);
 
         CommitFile* temp = commitHead;
+
+    int manFD = open(manifestPath,O_RDWR|O_APPEND);
+    if (manFD!=-1){
+        printf("*Overwriting Manifest File**\n");
+    }
+    manFD = open(manifestPath,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);  
+
+    char versionBuff[20];
+    sprintf(versionBuff,"%d",manifestVersion);
+    write(manFD,versionBuff,strlen(versionBuff));
+    char nL = '\n';
+    write(manFD,&nL,1);
+
+
        
-       // applyChanges(manifestHead,commitHead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
+    applyChanges(manifestHead,commitHead, manFD);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
+
+    close(manFD);
 
     
        
