@@ -1390,6 +1390,7 @@ void push(char*projectName,int socket)
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
 
 
+/*
     char* prompt = (char*)(malloc(sizeof(char)*5));
     prompt[0] = '\0';
     recv(socket, prompt, 5, 0); //gets command to either stop or start file loop
@@ -1416,12 +1417,12 @@ void push(char*projectName,int socket)
 
         char* fileBuffer = readInFile(path);
 
-
-        
-
-
         recv(socket, prompt, 5, 0); 
         char pathSize[10];
+
+        */
+
+       
 
         
 

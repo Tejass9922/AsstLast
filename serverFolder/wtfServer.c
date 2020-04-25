@@ -1155,8 +1155,12 @@ void push(int sock)
 
     applyChanges(manifestHead,commitHead, manFD);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
 
+    close(manFD);
+
+
     CommitFile*tempCHead = commitHead;
 
+    /*
     if (tempCHead == NULL)
     {
         send(sock, "STOP", 5, 0);
@@ -1189,8 +1193,9 @@ void push(int sock)
 
         }
     }
+    */
 
-    close(manFD);
+    
 
     
        
