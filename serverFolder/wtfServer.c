@@ -499,7 +499,8 @@ int returnFiles(int sock)
 
 char* readInFile(char* fileName)
 {
-    char  buffer [100000];
+   char*buffer = (char*)(malloc(sizeof(char)*1));
+   buffer[0] = '\0';
     char c;
     int fd = open(fileName,O_RDONLY);
     int status;
@@ -512,26 +513,17 @@ char* readInFile(char* fileName)
                     break;
                 }
                 else{   
-                  
-                    
-                    /*int len = strlen(buffer);
-                    char* new_buffer = (char *)malloc((strlen(buffer)+2));
-                    memcpy((void *)new_buffer,(void *)buffer,strlen(buffer));
-                    free(buffer);
-                    buffer = new_buffer;*/
-                    buffer[counter] = c;
-                    counter++;
+                    int len = strlen(buffer);
+                    buffer =  realloc(buffer,(len+ 2)*sizeof(char));
+                    buffer[len] = c;
+                    buffer[len+1] = '\0';
                   
                 }
                
             }while(status >0);
-       
-            close(fd);
-
-            char*nB  = buffer;
          
-           
-        return nB; 
+            close(fd);
+        return buffer; 
     }
     printf("Cannot open the file");
 }
@@ -694,32 +686,20 @@ CommitFile* createCommitFileNode(char command, int version, char* filePath, char
     temp->hash = hash;
     return temp;
 }
-File* tokenizeManifest(char* clientBuffer)
+File* tokenizeManifest( File* cHead, char* clientBuffer)
 {
-    
-   
-   
-   char projectVersionBuff[10];
-   int counter = 0;
-    File* cHead = NULL;//= server->fileHead;
-    int i=0;
-    char* buffer = malloc(sizeof(char) * 2);
-
-    
+     int i=0;
+   char* buffer = (char*)malloc(sizeof(char)*1);
    buffer[0] = '\0';
-     int len = strlen(buffer);
-   
     while (clientBuffer[i]!='\n'){
-        buffer = realloc(buffer,(len+ 2)*sizeof(char));
-       
+        int len = strlen(buffer);
+        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
         buffer[len] = clientBuffer[i];
         buffer[len+1] = '\0';
         i++;
     }
     i++;
     int projVersion = atoi(buffer);
-    projVersion++;
-  
    
    int count = 0;
    int version;
@@ -730,39 +710,38 @@ File* tokenizeManifest(char* clientBuffer)
     int cNodeLength = 0;
     buffer = (char*)malloc(sizeof(char)*1);
     buffer[0] = '\0';
-   
+
     while (i<strlen(clientBuffer))
     {
         if (clientBuffer[i]==' '){
             
             if (count==0)
             {
-              
                  version = atoi(buffer);
-                // printf("version check: %d\n", version);
+                 //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
-                buffer[0] = '\0';
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
             {
-               filePath = malloc(strlen(buffer));
+               filePath = malloc(strlen(buffer) + 1);
                strcpy(filePath,buffer);
                memmove(filePath, filePath+1, strlen(filePath));
                //mem move gets ride of extra space at the beginning 
                //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
-                buffer[0] = '\0';
+               buffer[0] = '\0';
                count++;
             }
             else if (count==2)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer) + 1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
-                buffer[0] = '\0';
+               buffer[0] = '\0';
                count++;
             }
             //printf("Count: %d\n", count);
@@ -777,29 +756,21 @@ File* tokenizeManifest(char* clientBuffer)
             insertFileNode(&cHead, tempNode);
             cNodeLength++;
             count = 0;
-             buffer = malloc(sizeof(char) *1);
+           buffer = malloc(sizeof(char) *1);
                 buffer[0] = '\0';
-            
+           
         }
         else
         {
             int len = strlen(buffer);
             buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
             buffer[len] = clientBuffer[i];
-            buffer[++len] = '\0'; 
+            buffer[len+1] = '\0'; 
         }
         i++;
         
     }
-
-    File*temp = cHead;
-    printf("reached\n");
-      
-
     return cHead;
-     
-   
-  
 }
 
 CommitFile* tokenizeCommit(char*cBuffer){
@@ -811,8 +782,7 @@ CommitFile* tokenizeCommit(char*cBuffer){
     char command;
    char* buffer = (char*)malloc(sizeof(char)*1);
    buffer[0] = '\0';
-    int SNodeLength = 0;
-   CommitFile*head = NULL;
+   CommitFile* head = NULL;
     while (i<strlen(cBuffer))
     {
         //printf("Char Check: %c\n", serverManifest[i]);
@@ -828,37 +798,46 @@ CommitFile* tokenizeCommit(char*cBuffer){
             }
             else if (count==1)
             {
-               version = atoi(buffer);
+                version = atoi(buffer);
                  memmove(buffer, buffer+1, strlen(buffer));
                  buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==2)
             {
-               filePath = malloc(strlen(buffer));
-               strcpy(hash,buffer);
-               memmove(filePath, filePath+1, strlen(filePath));
+               
+               filePath = malloc(strlen(buffer)+1);
+               
+               strcpy(filePath,buffer);
+              
+               memmove(filePath, filePath+1, strlen(filePath)+1);
                buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
                count++;
             }
              else if (count==3)
             {
-               hash = malloc(strlen(buffer));
+               hash = malloc(strlen(buffer)+1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
                count++;
             }
+
            
         }
         if (cBuffer[i]=='\n')
         {
          //  printf("%d\t%s\t%s",version,filePath,hash);
+           // printf("%c\t%d\t%s\t%s\n",command, version, filePath, hash);
             CommitFile* tempNode = createCommitFileNode(command,version, filePath, hash);     
             insertCommitFileNode(&head, tempNode);
-            SNodeLength++;
+            buffer = malloc(sizeof(char)*1);
+             buffer[0] = '\0';
             count = 0;
-            i++;
+           
         }
         else
         {
@@ -867,18 +846,30 @@ CommitFile* tokenizeCommit(char*cBuffer){
             buffer[len] = cBuffer[i];
             buffer[len+1] = '\0'; 
             
-            i++;
+           
         }
+        i++;
         
     }
+    printf("Commit reached 1\n");
+     CommitFile* temp = head;
+        while (temp!= NULL)
+        {
+            printf("%c\t%d\t%s\t%s\n",temp->command, temp->version, temp->filePath, temp->hash);
+            temp = temp->next;
+        }
     return head;
 }
 
-void applyChanges(File*manifestHead,CommitFile*commitHead)
+File* applyChanges(File*manifestHead,CommitFile*commitHead)
 {
     File*mHead = manifestHead;
     CommitFile*cHead = commitHead;
-    while (cHead!=NULL){
+
+    //hce
+
+    while (cHead!=NULL)
+    {
         if ((cHead->command=='M') ||(cHead->command=='D'))
         {
             while (mHead!=NULL)
@@ -889,6 +880,7 @@ void applyChanges(File*manifestHead,CommitFile*commitHead)
                         mHead->hash = (char*)(malloc(sizeof(char)*(strlen(cHead->hash)+1)));
                         strcpy(mHead->hash,cHead->hash);
                         mHead->version = cHead->version;
+                        
 
                     }
                     else
@@ -912,10 +904,16 @@ void applyChanges(File*manifestHead,CommitFile*commitHead)
         if (cHead2->command=='A')
         {
             File*temp = createFileNode(cHead2->version,cHead2->filePath,cHead2->hash);
-            insertFileNode(&mhead2,temp);
+            insertFileNode(&manifestHead,temp);
         }
     }
 
+    File*temp = manifestHead;
+    while (temp!=NULL){
+        printf("%d\t%s\t%s",temp->version,temp->filePath,temp->hash);
+        temp = temp->next;
+    }
+    return manifestHead;
 }
 void push(int sock)
 {
@@ -1002,10 +1000,19 @@ void push(int sock)
         char commitExt[9];
         while ((dx = readdir(dir)) != NULL)
         {
-            if (strcmp(dx->d_name, ".") != 0 && strcmp(dx->d_name, "..") != 0 && strcmp(dx->d_name, commitPath) != 0)
+           
+            char testCommit[strlen(projectName)+2+strlen(dx->d_name)];
+            strcpy(testCommit,projectName);
+            strcat(testCommit,"/");
+            strcat(testCommit,dx->d_name);
+           
+            if (strcmp(dx->d_name, ".") != 0 && strcmp(dx->d_name, "..") != 0 && strcmp(testCommit, commitPath) != 0 && strlen(dx->d_name)>6)
             {
-               strncpy(commitExt,dx->d_name,8);
+              
+                
+               strncpy(commitExt,dx->d_name,7);
                commitExt[8] = '\0';
+           
                if (strcmp(commitExt,".Commit")==0){
                    char path [strlen(projectName)+2+strlen(dx->d_name)];
                    strcpy(path,projectName);
@@ -1047,7 +1054,7 @@ void push(int sock)
        projVersion[len] = c;
        projVersion[len+1] = '\0';    
     }
-    close(fd);
+        close(fd);
 
     
         char oldProjectsPath[14+(2*(strlen(projectName)))+strlen(projVersion)+4];
@@ -1080,7 +1087,7 @@ void push(int sock)
         strcpy(path,projectName);
         strcat(path,"/.Manifest");
         char*buff = readInFile(path); 
-    
+       // printf("Buffer: %s\n",buff);
         int i=0;
                 char*buffer = (char*)(malloc(sizeof(char)*1));
                 buffer[0] = '\0';
@@ -1094,18 +1101,20 @@ void push(int sock)
                  i++;
                 int manifestVersion = atoi(buffer);
                 manifestVersion++;
-                 buffer = (char*)(malloc(sizeof(char)*1));
+               free(buffer);
                
-                File* cHead = NULL;
+                 File* manifestHead = NULL;
 
-                cHead = tokenizeManifest(buff);
+              
+                manifestHead = tokenizeManifest(manifestHead,buff);
+
        
-       File* temp = cHead;
-         while (temp!= NULL)
+      /* File* temp = cHead;
+        while (temp!= NULL)
         {
             printf("%d\t%s\t%s\n", temp->version, temp->filePath, temp->hash);
             temp = temp->next;
-        }
+        }*/
 
 
         //Run through manifest and create Nodes
@@ -1115,9 +1124,12 @@ void push(int sock)
             // add new nodes to the linked list 
         //write back to the manifest file while incrementing the proj.version
         //write out a history file 
+     //  printf("Commit file:\n%s\n",clientCommitFile);
+        CommitFile* commitHead = NULL;
+        commitHead = tokenizeCommit(clientCommitFile);
+
+        CommitFile* temp = commitHead;
        
-       // CommitFile*commitHead = NULL;
-        //commitHead = tokenizeCommit(clientCommitFile);
        // applyChanges(manifestHead,commitHead);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
 
     
