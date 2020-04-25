@@ -30,7 +30,13 @@ typedef struct Manifest{
     int ProjectVersion;
     struct File* fileHead; 
 }Manifest;
-
+typedef struct CommitFile{
+    char command;
+    int version;
+    char* filePath;
+    char* hash;
+    struct CommitFile* next;
+}CommitFile;
 
 typedef struct ConfigureInfo{
 
@@ -73,6 +79,11 @@ void checkIPbuffer(char *IPbuffer)
     } 
 } 
 void insertFileNode(File **head, File *newNode)
+{
+    newNode->next = *head;
+    *head = newNode;
+}
+void insertCommitFileNode(CommitFile **head, CommitFile *newNode)
 {
     newNode->next = *head;
     *head = newNode;
@@ -136,6 +147,104 @@ File* createFileNode(int version, char* filePath, char* hash)
     temp->hash = hash;
     return temp;
 }
+CommitFile* createCommitFileNode(char command, int version, char* filePath, char* hash)
+{
+    struct CommitFile* temp = (struct CommitFile*)malloc(sizeof(CommitFile));
+    temp->command = command;
+    temp->filePath = filePath;
+    temp->version = version;
+    temp->hash = hash;
+    return temp;
+}
+
+CommitFile* tokenizeCommit(char*cBuffer){
+    int i=0;
+    int count = 0;
+    int version;
+    char*filePath;
+    char*hash;
+    char command;
+   char* buffer = (char*)malloc(sizeof(char)*1);
+   buffer[0] = '\0';
+   CommitFile* head = NULL;
+    while (i<strlen(cBuffer))
+    {
+        //printf("Char Check: %c\n", serverManifest[i]);
+        if (cBuffer[i]==' ')
+        {
+            
+            if (count==0)
+            {
+                 command = buffer[0];
+                 buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
+                 count++;
+            }
+            else if (count==1)
+            {
+                version = atoi(buffer);
+                 memmove(buffer, buffer+1, strlen(buffer));
+                 buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
+                 count++;
+            }
+            else if (count==2)
+            {
+               
+               filePath = malloc(strlen(buffer)+1);
+               
+               strcpy(filePath,buffer);
+              
+               memmove(filePath, filePath+1, strlen(filePath)+1);
+               buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
+               count++;
+            }
+             else if (count==3)
+            {
+               hash = malloc(strlen(buffer)+1);
+               strcpy(hash,buffer);
+               memmove(hash, hash+1, strlen(hash));
+               buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
+               count++;
+            }
+
+           
+        }
+        if (cBuffer[i]=='\n')
+        {
+         //  printf("%d\t%s\t%s",version,filePath,hash);
+           // printf("%c\t%d\t%s\t%s\n",command, version, filePath, hash);
+            CommitFile* tempNode = createCommitFileNode(command,version, filePath, hash);     
+            insertCommitFileNode(&head, tempNode);
+            buffer = malloc(sizeof(char)*1);
+             buffer[0] = '\0';
+            count = 0;
+           
+        }
+        else
+        {
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = cBuffer[i];
+            buffer[len+1] = '\0'; 
+            
+           
+        }
+        i++;
+        
+    }
+    printf("Commit reached 1\n");
+     CommitFile* temp = head;
+        /*while (temp!= NULL)
+        {
+            printf("%c\t%d\t%s\t%s\n",temp->command, temp->version, temp->filePath, temp->hash);
+            temp = temp->next;
+        }
+        */
+    return head;
+}
 
 
 char* computeHash(char* path)
@@ -143,13 +252,14 @@ char* computeHash(char* path)
     char hash[SHA_DIGEST_LENGTH];
     char* buffer = readInFile(path);
     SHA1(buffer, strlen(buffer), hash);
-    char* test = malloc(sizeof(char) * 40);
+    char* test = malloc(sizeof(char) * 41);
     int j = 0;
     while(j < 20)
     {
         sprintf((char*)&(test[j * 2]), "%02x", hash[j]);
         j++;
     }
+    test[40] = '\0';
     return test;
 
 }
@@ -1177,106 +1287,7 @@ void commit(char* projectName, int socket){
    
 }
 
-void listFilesRecursively(char *basePath, int socket, )
-{
-    
-    char path[1000];
-    struct dirent *dp;
-    DIR *dir = opendir(basePath);
-    if (!dir)
-        return;
 
-    while ((dp = readdir(dir)) != NULL)
-    {
-        if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0)
-        {
-          
-            strcpy(path, basePath);
-            strcat(path, "/");
-            strcat(path, dp->d_name);
-            if (is_regular_file(path) == 1) //check to see if it is a file or directory 
-            {
-                char* file = "FILE";
-                send(socket,file,strlen(file),0); //sends file message 
-                char* confirmation = malloc(sizeof(char) * 9);
-                recv(socket, confirmation, 100, 0); //gets cofirmation from client 
-                int fileNameLength = strlen(path)+1; //gets the lenghth of the file path
-                char size[10];
-                //printf("length: %d\n", fileNameLength); 
-                sprintf(size,"%d",fileNameLength); //changes the integer into a char array to be sent over to the client
-                send(socket,size,10,0); //sends the size of the path name 
-                char nameSizeConfirm[8];
-                recv(socket,nameSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
-                //printf("path: %s + Size: %d\n", path, fileNameLength);
-                char* tPath = (char*)(malloc(sizeof(char)*(strlen(path))));
-                tPath = path;
-                send(socket,tPath,fileNameLength,0); //sends actual file path name
-                char* confirmName = malloc(sizeof(char) * 9);
-                recv(socket,nameSizeConfirm,8,0); //client confirms it got the namE
-
-                
-                int Fsize = 1000;//strlen(readInFile(tPath)); //gets size of file
-                char* fileBuffer = (char*) malloc(sizeof(char) * Fsize); //mallocs a buffer for the file 
-                fileBuffer = readInFile(tPath); //puts file into a buffer
-                if (fileBuffer[0] != '\0')
-                {
-                    send(socket,"FF",3,0); //send a signal to client saying file is not empty 
-                    char*emptyCheck = (char*)(malloc(sizeof(char)*4));
-                    recv(socket,emptyCheck,4,0); //recieved confimration from client that file is not empty 
-
-                    char fileSizeArr[10]; 
-                    sprintf(fileSizeArr,"%d", Fsize); //changes the integer into a char array to be sent over to the client
-                    send(socket,fileSizeArr,10,0); //sends the size of buffer
-                    char FileSizeConfirm[8];
-                    recv(socket,FileSizeConfirm,8,0); //client confirms it got the size of the file
-                    send(socket,fileBuffer, Fsize, 0); //sends the actual file buffer
-                    recv(socket,FileSizeConfirm,8,0); //client confirms it got the namE
-                    //printf("Buffer: %s\n", fileBuffer);
-
-                }
-                else
-                {
-                    char* isNotEmpty = malloc( sizeof(char) * 11);
-                    send(socket, "EE", 3, 0);
-                    char*emptyCheck = (char*)(malloc(sizeof(char)*4));
-                    recv(socket,emptyCheck,4,0); //recieved confimration from client that file is empty 
-                  
-                    printf("File Empty\n");
-                }
-             
-               
-            
-
-            }
-            else
-            {
-                char* file = "DIRE";
-                send(socket,file,strlen(file),0); //sends file message 
-                char* confirmation = malloc(sizeof(char) * 9);
-                recv(socket, confirmation, 100, 0); //gets cofirmation from client 
-                int direNameLength = strlen(path); //gets the lenghth of the file path
-                char size[10];
-                //printf("length: %d\n", fileNameLength); 
-                sprintf(size,"%d",direNameLength); //changes the integer into a char array to be sent over to the client
-                send(socket,size,10,0); //sends the size of the path name 
-                char direSizeConfirm[8];
-                recv(socket, direSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
-                //printf("path: %s + Size: %d\n", path, direNameLength);
-                send(socket,path,direNameLength,0); //sends actual file path name
-                char* confirmName = malloc(sizeof(char) * 9);
-                recv(socket, direSizeConfirm, 8,0); //client confirms it got the name
-            }
-            
-            //printf("%s\t", path);
-            //printf("%d\n",is_regular_file(path));
-            
-            listFilesRecursively(path,socket);
-        }
-    }
-
-    closedir(dir);
-
-}
 
 
 void push(char*projectName,int socket)
@@ -1362,9 +1373,9 @@ void push(char*projectName,int socket)
           counter++;
 
        }while (status>0);
-        char*commitBuffer = &buffer[0];
+        char*commitBuffer = &buffer[0];                             //we used the sure fire way to already put the commit file into a buffer (cmmit bBffer)
          close(fd);
-        
+        CommitFile* commitHead = tokenizeCommit(commitBuffer);      //tokenizes commit Buffer
         int length = strlen(commitBuffer);
         printf("%d\n",length);
         char size[10];
@@ -1377,6 +1388,45 @@ void push(char*projectName,int socket)
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
+
+
+    char* prompt = (char*)(malloc(sizeof(char)*5));
+    prompt[0] = '\0';
+    recv(socket, prompt, 5, 0); //gets command to either stop or start file loop
+    if (strcmp(prompt, "STOP") == 0) 
+    {
+        printf("No Commits to be made\n"); //got command to stop 
+    }
+    else
+    {
+        send(socket, "Confirm", 8, 0); //process will start and sends confirmation
+    }
+    
+
+
+    while (strcmp(prompt, "STOP") != 0)
+    {
+        char pathSize[10];
+        recv(socket, pathSize, 10, 0); //gets the file name length
+        int pathLength = atoi(pathSize); //
+        send(socket, "Confirm", 8, 0); //sends confirmation it got the file name length
+
+        char* path = malloc(sizeof(char) * pathLength);
+        recv(socket, path, pathLength, 0) ;//gets file name 
+
+        char* fileBuffer = readInFile(path);
+
+
+        
+
+
+        recv(socket, prompt, 5, 0); 
+        char pathSize[10];
+
+        
+
+    }
+    
 
         
    }
@@ -1449,19 +1499,11 @@ void add(char*projectName, char*fileName)
             */
 
             char* buffer = readInFile(path);
-            SHA1(buffer, strlen(buffer), hash);
-            
-            char test[40];
-            int j = 0;
-            while(j < 20)
-            {
-                sprintf((char*)&(test[j * 2]), "%02x", hash[j]);
-                j++;
-            }
-            printf("testBuffer: %s\n", test);
             
             
-            
+            char* test  = (char*)(malloc(sizeof(char)*41));
+            printf("reached1\n"); 
+            test = computeHash(path);
            
             //sprintf(hexHash,"%x",hash);
            

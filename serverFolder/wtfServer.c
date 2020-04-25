@@ -1153,9 +1153,42 @@ void push(int sock)
     char nL = '\n';
     write(manFD,&nL,1);
 
-
-       
     applyChanges(manifestHead,commitHead, manFD);  //checks for M, A , D commands in commit linked list and applies changes to the LL of the Manifest
+
+    CommitFile*tempCHead = commitHead;
+
+    if (tempCHead == NULL)
+    {
+        send(sock, "STOP", 5, 0);
+        print("No commit to be made\n");
+        return;
+    }
+    else{
+        send(sock, "GOOO", 6, 0); //send  command to start
+        char* reply = malloc(sizeof(char) * 8); 
+        recv(sock, reply, 8, 0); //get confirmation
+    }
+
+    while (tempCHead != NULL)
+    {
+        if (tempCHead->command == 'A' || tempCHead->command == 'M')
+        {
+            int pathSize = strlen(tempCHead->filePath) + 1; //gets path length 
+            char* charPathSize = malloc(sizeof(char) * 10); 
+            sprintf(charPathSize, "%d", pathSize); //converts int to char* 
+            send(sock, pathSize, strlen(charPathSize)+1, 0); //sends path length as char* 
+            char* reply = malloc(sizeof(char) * 8); 
+            recv(sock, reply, 8, 0); //get confirmation
+
+            send(sock, tempCHead->filePath, strlen(tempCHead->filePath) + 1, 0); //sends file path 
+
+            recv(sock, reply, 8, 0); //get confirmation
+
+            
+
+
+        }
+    }
 
     close(manFD);
 
