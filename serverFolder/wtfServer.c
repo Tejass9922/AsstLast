@@ -903,7 +903,7 @@ void applyChanges(File*manifestHead,CommitFile*commitHead, int manFD)
             }
             else if((cHead1->next == NULL) && (addCheck == 0))
             {
-               //printf("Keep %d\t%s\t%s\n", mHead1->version, mHead1->filePath, mHead1->hash);
+               writeManifest(mHead1->version, mHead1->filePath, mHead1->hash, manFD);
                addCheck = 1;
             }
             cHead1 = cHead1->next;
@@ -975,6 +975,87 @@ void upgrade(int sock)
      closedir(dx1);
      send(sock,"Got Name", 9 ,0); //sends confirmation it got name
      printf("projName: %s\n", projectName);
+    
+     char  path[strlen(projectName)+11];
+        strcpy(path,projectName);
+        strcat(path,"/.Manifest");
+        char*buff = readInFile(path); 
+       // printf("Buffer: %s\n",buff);
+        int i=0;
+                char*buffer = (char*)(malloc(sizeof(char)*1));
+                buffer[0] = '\0';
+                 while (buff[i]!='\n'){
+                    int len = strlen(buffer);
+                    buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+                    buffer[len] = buff[i];
+                    buffer[len+1] = '\0';
+                    i++;
+                }
+         
+                 i++;
+    char* get = malloc(sizeof(char) * 4);
+    recv(sock, get, 4, 0); //gets command to send manifest version 
+    send(sock, buffer, strlen(buffer) + 1, 0); //sends manifest version
+
+    char* updateSize = malloc(sizeof(char) * 10); 
+    recv(sock, updateSize, 10, 0); //gets size of commit buffer 
+    
+    send(sock, "GOT", 4, 0); //sends confirmation it got the buffer size 
+
+    int updateSizeInt = atoi(updateSize); //converts char* to int 
+
+    char* updateBuffer = malloc(sizeof(char) * updateSizeInt);
+
+
+    recv(sock, updateBuffer, updateSizeInt + 1, 0); //gets buffer from server 
+
+    printf("%s\n", updateBuffer);
+
+    CommitFile* uHead = NULL;
+    uHead = tokenizeCommit(updateBuffer);
+
+      CommitFile* cHead2 = uHead;
+    while (cHead2 !=NULL)
+    {
+        if ((cHead2->command == 'A') || (cHead2->command == 'M'))
+        {
+            char* fileBuffer = readInFile(cHead2->filePath); //puts file into a buffer
+
+            int fileSize = strlen(fileBuffer); //gets file buffer size
+
+            if (fileSize != 0)
+            {
+                printf("Length: %d\n", fileSize);
+
+                char* charFileSize = malloc(sizeof(char) * 10); 
+                charFileSize[0] = '\0';
+                
+                sprintf(charFileSize, "%d", fileSize); //converts int to char* 
+                send(sock, charFileSize, strlen(charFileSize)+1, 0); //sends size of file buffer 
+            
+                char* reply = malloc(sizeof(char) * 8);
+                recv(sock, reply, 8, 0); //gets confirmation
+
+
+                send(sock, fileBuffer, strlen(fileBuffer)+1, 0); //sends actual file buffer 
+                reply = malloc(sizeof(char) * 8);
+                recv(sock, reply, 8, 0); //gets confirmation
+
+                printf("fileBuffer: %s\n", fileBuffer);
+            }
+            else{
+                send(sock, "NO", 3, 0); //sends size of file buffer 
+                char* ok = malloc(sizeof(char) * 3);
+                recv(sock, ok, 3, 0); //gets confirmation
+
+            }
+        
+
+        }
+
+        cHead2 = cHead2->next;
+    }
+        
 
 
 }

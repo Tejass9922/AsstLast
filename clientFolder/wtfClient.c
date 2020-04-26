@@ -1444,7 +1444,7 @@ void applyChanges(File*manifestHead,CommitFile* commitHead, int manFD)
             }
             else if((cHead1->next == NULL) && (addCheck == 0))
             {
-               //printf("Keep %d\t%s\t%s\n", mHead1->version, mHead1->filePath, mHead1->hash);
+               writeManifest(mHead1->version, mHead1->filePath, mHead1->hash, manFD);
                addCheck = 1;
             }
             cHead1 = cHead1->next;
@@ -1468,6 +1468,38 @@ void applyChanges(File*manifestHead,CommitFile* commitHead, int manFD)
     }
 
 
+}
+
+void makeDirs(char* path){      //making directories on server side up till the path that is given. Used in push.
+
+    char*buffer = malloc(sizeof(char)*1);
+    buffer[0]= '\0';
+    int i = 0;
+  
+    while (i<strlen(path))
+    {
+        if (path[i]=='/'){
+            struct stat sb;
+            if (!(stat(buffer, &sb) == 0 && S_ISDIR(sb.st_mode))) {
+               mkdir(buffer,0777);
+            }       
+            
+        }
+       
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = path[i];
+            buffer[len+1] = '\0';
+            
+        
+    i++;
+    }
+}
+
+void writeNewFiles(int fd,char*fileBuffer,bool empty){
+//check if empty buffer first
+if (!empty)
+    write(fd,fileBuffer,strlen(fileBuffer));
 }
 
 void upgrade(char* projectName, int socket)
@@ -1495,13 +1527,27 @@ void upgrade(char* projectName, int socket)
     char*manifestBuffer = readInFile(manifestFileName);
 
     int manFD = open(manifestFileName,O_RDWR,O_TRUNC);
+
+      char versionBuff[20];
     
-    int manifestVersion = 2;
-    char versionBuff[20];       //turn manifestversion (already incremented) into a char*
-    sprintf(versionBuff,"%d",manifestVersion);
+    send(socket, "GET", 4, 0); //sends command to get manifest version 
+    recv(socket, versionBuff, 20, 0); //gets manifets version 
+
+    char* confirm = malloc(sizeof(char) * 4);
+
+    int bufferSize = strlen(updateBuffer);
+    char* bufferSizeArr = malloc (sizeof(char) * 10);
+    sprintf(bufferSizeArr, "%d", bufferSize);
+    send(socket, bufferSizeArr, strlen(bufferSizeArr) + 1, 0); //send buffer size 
+    recv(socket, confirm, 10, 0); //gets confirmation server got the buffer size 
+
+    send(socket, updateBuffer, bufferSize + 1,0); //sends the update buffer 
+
     write(manFD,versionBuff,strlen(versionBuff));
     char nL = '\n';
     write(manFD,&nL,1);
+
+    
 
    //(Update) 
    CommitFile* uHead = NULL;
@@ -1513,11 +1559,11 @@ void upgrade(char* projectName, int socket)
     if (mHead==NULL)
         printf("null case\n");
     File*temp = mHead;
-   /* while(temp!=NULL){
+    while(temp!=NULL){
         printf("%d\t%s\t%s\n",temp->version,temp->filePath,temp->hash);
         temp = temp->next;
     }
-*/
+
      CommitFile*temp2 = uHead;
     
    /* while(temp2!=NULL){
@@ -1530,7 +1576,56 @@ void upgrade(char* projectName, int socket)
     applyChanges(mHead,uHead,manFD);
 
     close(manFD);
+
+     CommitFile* cHead2 = uHead;
+    while (cHead2 !=NULL)
+    {
+        if ((cHead2->command == 'A') || (cHead2->command == 'M'))
+        {
+            makeDirs(cHead2->filePath);
+            char* fileSize = malloc (sizeof(char) * 10);
+            fileSize[0] = '\0';
+            recv(socket, fileSize, 10, 0); //gets size of file buffer 
+            if (strcmp(fileSize, "NO") == 0)
+            {
+                send(socket, "OK", 3, 0);
+            }
+            else
+            {          
+                send(socket, "Confirm", 8, 0); //sends confirmation it got the file size 
+
+                int size = atoi(fileSize);
+
+                printf("Length: %d\n", size);
+
+                char* fileBuffer = malloc(sizeof(char) * size);
+                recv(socket, fileBuffer, size+1, 0); //gets file buffer
+                send(socket, "Confirm", 8, 0); //sends confirmation it got the file buffer 
+
+                printf("fileBuffer: %s\n", fileBuffer);
+                int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);
+                writeNewFiles(fd,fileBuffer,false);
+                close(fd);
+                
+            }
+            
+
+        }
+
+        cHead2 = cHead2->next;
+    }
+
+    CommitFile* cHead3 = uHead;
+    while (cHead3!=NULL)
+    {
+       if ((cHead3->command)=='D'){
+           remove(cHead3->filePath);
+       }
+      cHead3 =  cHead3->next;
+    }
+  remove(updateFileName);
   
+  return;
 
 }
 
@@ -2304,8 +2399,10 @@ bool canUpgrade(char*projectName){
         }
      }
 
-     if (!hasUpdate)
+     if (!hasUpdate){
+         printf("No .Update File found!!\n");
         return false;
+     }
     
     return true;
     
