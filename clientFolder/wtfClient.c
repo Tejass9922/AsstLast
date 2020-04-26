@@ -235,7 +235,7 @@ CommitFile* tokenizeCommit(char*cBuffer){
         i++;
         
     }
-    printf("Commit reached 1\n");
+  
      CommitFile* temp = head;
         /*while (temp!= NULL)
         {
@@ -296,6 +296,20 @@ void writeUpdate(int fd,int version,char*filePath, char*hash,char command){
    write(fd,&nL,1);
 
 }
+
+void writeConflict(int fd,char*filePath, char*hash,char command){
+    char sp = ' ';
+    char nL = '\n';
+   write(fd,&command,1);
+   write(fd,&sp,1);
+   write(fd,filePath,strlen(filePath));
+   write(fd,&sp,1);
+   write(fd,hash,strlen(hash));
+   write(fd,&sp,1);
+   write(fd,&nL,1);
+
+}
+
 
 void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLength, char* projectName,int socket)
 {
@@ -529,7 +543,12 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 }
 void updateFile(Manifest client, Manifest server, char* projectName,int socket)
 {
+             char* conflictPath = malloc((strlen(projectName) + 11) * sizeof(char));
+            strcpy(conflictPath, projectName);
+            char conflictExt[11] = "/.Conflict";
+            strcat(conflictPath, conflictExt);
         
+            remove(conflictPath);
             char* updateFileName = malloc((strlen(projectName) + 9) * sizeof(char));
             strcpy(updateFileName, projectName);
             char updateExt[9] = "/.Update";
@@ -540,6 +559,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
         if (client.ProjectVersion == server.ProjectVersion)
         {
             printf("Full Success: NO Updates\n");
+            remove(conflictPath);
             return;
         }
        
@@ -583,6 +603,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
         int addCheck = 0;
         int count1 = 0;
         bool checkTest = false;
+        int conflictCheck = 0;
         //printf("%d\t%d\n",cNodeLength,sNodeLength);
         while(cheadTemp != NULL)//iterates thrr client nodes 
         {
@@ -597,7 +618,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
                     
                   if ((strcmp(cheadTemp->hash, sheadTemp->hash) != 0)&&(cheadTemp->version!=sheadTemp->version)) //check to see if stored hash is the same but file version is different
                   {
-                        char* liveHash = malloc(sizeof(char) * 40);
+                        char* liveHash = malloc(sizeof(char) * 41);
                         liveHash = computeHash(cheadTemp->filePath);
                         if (strcmp(cheadTemp->hash,liveHash)==0){ //check to see if live hash of client file is different than stored hash
                          //modify code
@@ -608,9 +629,13 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
                         }
                         else
                         {
-                              //conflict case
-                              printf("C %s\n",cheadTemp->filePath); //if live hash of client file is different than stored hash adds a modify line 
+                            int conflictFD = open(conflictPath,O_RDWR|O_CREAT|O_APPEND, 0777);
+                              remove(updateFileName);
+                              printf("C %s\t%s \n",cheadTemp->filePath,liveHash); //if live hash of client file is different than stored hash adds a modify line 
+
+                              writeConflict(conflictFD,cheadTemp->filePath,liveHash,'C');
                               //write conflict file
+                              close(conflictFD);
                         }
 
                   }       
@@ -647,7 +672,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
                 }
                 
                // printf("%d\n",addCheck);
-                if ((cheadTemp2->next==NULL)&&(addCheck==0)){
+                if ((cheadTemp2->next==NULL)&&(checkTest==false)){
                     printf("A %d %s %s\n",sheadTemp2->version,sheadTemp2->filePath,sheadTemp2->hash);
                     writeUpdate(updateFD,sheadTemp2->version,sheadTemp2->filePath,sheadTemp2->hash,'A');
 
@@ -663,7 +688,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
 
         close(updateFD);
 
-      /*  char* updateBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(updateFileName))));
+       /* char* updateBuffer = (char*)(malloc(sizeof(char)* strlen(readInFile(updateFileName))));
         
         updateBuffer = readInFile(updateFileName); //gets commit file size
         int updateSize = strlen(updateBuffer);
@@ -679,8 +704,8 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
         char temp[8];
         recv(socket,temp,8,0);//gets confirmation from server that it got the size 
        
-        send(socket,updateBuffer ,updateSize, 0); //sends the commit buffer using the size of it stores in size 
-        */
+        send(socket,updateBuffer ,updateSize, 0); //sends the commit buffer using the size of it stores in size */
+        
 
         
     
@@ -782,6 +807,92 @@ File* tokenizeClientManifest(File*cHead,char*clientBuffer){
             else if (count==2)
             {
                hash = malloc(strlen(buffer)+1);
+               strcpy(hash,buffer);
+               memmove(hash, hash+1, strlen(hash));
+               //printf("hash: %s\n", hash);
+               buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
+               count++;
+            }
+            //printf("Count: %d\n", count);
+            
+            //buffer = (char*)malloc(sizeof(char)*1);
+            
+        }
+        if (clientBuffer[i]=='\n')
+        {
+          
+            File* tempNode = createFileNode(version, filePath, hash);     
+            insertFileNode(&cHead, tempNode);
+            cNodeLength++;
+            count = 0;
+           buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
+           
+        }
+        else
+        {
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = clientBuffer[i];
+            buffer[len+1] = '\0'; 
+        }
+        i++;
+        
+    }
+    return cHead;
+}
+File* tokenizeManifest( File* cHead, char* clientBuffer)
+{
+     int i=0;
+   char* buffer = (char*)malloc(sizeof(char)*1);
+   buffer[0] = '\0';
+    while (clientBuffer[i]!='\n'){
+        int len = strlen(buffer);
+        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+        buffer[len] = clientBuffer[i];
+        buffer[len+1] = '\0';
+        i++;
+    }
+    i++;
+    int projVersion = atoi(buffer);
+   
+   int count = 0;
+   int version;
+   char*hash;
+   char*filePath;
+    //char*filePath;
+    //char*hash;
+    int cNodeLength = 0;
+    buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
+
+    while (i<strlen(clientBuffer))
+    {
+        if (clientBuffer[i]==' '){
+            
+            if (count==0)
+            {
+                 version = atoi(buffer);
+                 //printf("version check: %d\n", version);
+                 buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
+                 count++;
+            }
+            else if (count==1)
+            {
+               filePath = malloc(strlen(buffer) + 1);
+               strcpy(filePath,buffer);
+               memmove(filePath, filePath+1, strlen(filePath));
+               //mem move gets ride of extra space at the beginning 
+               //printf("FilePath: %s\n", filePath);
+               buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
+               count++;
+            }
+            else if (count==2)
+            {
+               hash = malloc(strlen(buffer) + 1);
                strcpy(hash,buffer);
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
@@ -1049,6 +1160,8 @@ void update(char* projectName, int socket){
 
     updateFile(client, server, projectName,socket);
 
+    
+
     return;
    
 }
@@ -1286,9 +1399,140 @@ void commit(char* projectName, int socket){
     return;
    
 }
+void writeManifest(int version,char*filePath, char*hash, int fd){
+    char sp = ' ';
+    char nL = '\n';
+    char versionBuff[20];
+    sprintf(versionBuff,"%d",version);
+    write(fd,versionBuff,strlen(versionBuff));
+    write(fd,&sp,1);
+    write(fd,filePath,strlen(filePath));
+    write(fd,&sp,1);
+    write(fd,hash,strlen(hash));
+    write(fd,&sp,1);
+    write(fd,&nL,1);
+
+}
+
+void applyChanges(File*manifestHead,CommitFile* commitHead, int manFD)
+{
+   File* mHead1 = manifestHead;
+   CommitFile* cHead1 = commitHead;
+    int addCheck = 1;
+     int loop_check = 0;
+    while (mHead1 != NULL)
+    {
+        addCheck = 0;
+        cHead1 = commitHead;
+        while (cHead1 != NULL)
+        {
+
+            //printf("%s\n", cHead1->filePath);
+            if (strcmp(mHead1->filePath, cHead1->filePath) == 0)
+            {
 
 
+                if(cHead1->command == 'M')
+                {
+                   //printf("Modify %d\t%s\t%s\n", cHead1->version, cHead1->filePath, cHead1->hash);
+                   writeManifest(cHead1->version, cHead1->filePath, cHead1->hash, manFD);
+                   printf("MOD\n");
+                   
+                }
+                addCheck = 1;
 
+            }
+            else if((cHead1->next == NULL) && (addCheck == 0))
+            {
+               //printf("Keep %d\t%s\t%s\n", mHead1->version, mHead1->filePath, mHead1->hash);
+               addCheck = 1;
+            }
+            cHead1 = cHead1->next;
+        }
+        mHead1 = mHead1 ->next;
+    }
+
+    File* mHead2 = manifestHead;
+    CommitFile* cHead2 = commitHead;
+
+   
+    while (cHead2 !=NULL)
+    {
+        if (cHead2->command == 'A')
+        {
+            //printf("Add %d\t%s\t%s\n", cHead2->version, cHead2->filePath, cHead2->hash);
+            writeManifest(cHead2->version, cHead2->filePath, cHead2->hash, manFD);
+            //printf("ADD\n");
+        }
+        cHead2 = cHead2->next;
+    }
+
+
+}
+
+void upgrade(char* projectName, int socket)
+{
+    send(socket, projectName, strlen(projectName) + 1, 0); //sends project name to server 
+    char* projectReply = malloc (sizeof(char) * 9);
+    recv(socket, projectReply, 9, 0); //gets reply from server 
+    if (strcmp(projectReply, "DNE") == 0)
+    {
+        printf("Server does not have project\n"); //if project does not exists on server 
+        return;
+    }
+    printf("%s\n", projectReply);
+
+    char updateFileName[strlen(projectName)+9];
+    char updateExt[9] = "/.Update";
+    strcpy(updateFileName,projectName);
+    strcat(updateFileName,updateExt);
+    char*updateBuffer = readInFile(updateFileName);
+
+    char manifestFileName[strlen(projectName)+11];
+    strcpy(manifestFileName,projectName);
+    char manifestExt[11] = "/.Manifest";
+    strcat(manifestFileName,manifestExt);
+    char*manifestBuffer = readInFile(manifestFileName);
+
+    int manFD = open(manifestFileName,O_RDWR,O_TRUNC);
+    
+    int manifestVersion = 2;
+    char versionBuff[20];       //turn manifestversion (already incremented) into a char*
+    sprintf(versionBuff,"%d",manifestVersion);
+    write(manFD,versionBuff,strlen(versionBuff));
+    char nL = '\n';
+    write(manFD,&nL,1);
+
+   //(Update) 
+   CommitFile* uHead = NULL;
+   uHead = tokenizeCommit(updateBuffer);
+
+   //printf("%s\n", updateBuffer);
+   File*mHead = NULL;
+   mHead =  tokenizeManifest(mHead,manifestBuffer);
+    if (mHead==NULL)
+        printf("null case\n");
+    File*temp = mHead;
+   /* while(temp!=NULL){
+        printf("%d\t%s\t%s\n",temp->version,temp->filePath,temp->hash);
+        temp = temp->next;
+    }
+*/
+     CommitFile*temp2 = uHead;
+    
+   /* while(temp2!=NULL){
+        printf("%c\t%d\t%s\t%s\n",temp2->command,temp2->version,temp2->filePath,temp2->hash);
+        temp2 = temp2->next;
+    }*/
+   
+   //write the version number ( new one from server)
+
+    applyChanges(mHead,uHead,manFD);
+
+    close(manFD);
+  
+
+}
 
 void push(char*projectName,int socket)
 {
@@ -1296,6 +1540,11 @@ void push(char*projectName,int socket)
         send(socket, projectName, strlen(projectName) + 1, 0); //sends project name
         char* projectReply = malloc (sizeof(char) * 9);
         recv(socket, projectReply, 9, 0);
+        if (strcmp(projectReply, "DNE") == 0)
+        {
+            printf("Server does not have project\n");
+            return;
+        }
         printf("%s\n", projectReply);
 
 
@@ -1399,23 +1648,33 @@ void push(char*projectName,int socket)
 
             int fileSize = strlen(fileBuffer); //gets file buffer size
 
-            printf("Length: %d\n", fileSize);
+            if (fileSize != 0)
+            {
+                printf("Length: %d\n", fileSize);
 
-            char* charFileSize = malloc(sizeof(char) * 10); 
-            charFileSize[0] = '\0';
+                char* charFileSize = malloc(sizeof(char) * 10); 
+                charFileSize[0] = '\0';
+                
+                sprintf(charFileSize, "%d", fileSize); //converts int to char* 
+                send(socket, charFileSize, strlen(charFileSize)+1, 0); //sends size of file buffer 
             
-            sprintf(charFileSize, "%d", fileSize); //converts int to char* 
-            send(socket, charFileSize, strlen(charFileSize)+1, 0); //sends size of file buffer 
-        
-            char* reply = malloc(sizeof(char) * 8);
-            recv(socket, reply, 8, 0); //gets confirmation
+                char* reply = malloc(sizeof(char) * 8);
+                recv(socket, reply, 8, 0); //gets confirmation
 
 
-            send(socket, fileBuffer, strlen(fileBuffer)+1, 0); //sends actual file buffer 
-            reply = malloc(sizeof(char) * 8);
-            recv(socket, reply, 8, 0); //gets confirmation
+                send(socket, fileBuffer, strlen(fileBuffer)+1, 0); //sends actual file buffer 
+                reply = malloc(sizeof(char) * 8);
+                recv(socket, reply, 8, 0); //gets confirmation
 
-            printf("fileBuffer: %s\n", fileBuffer);
+                printf("fileBuffer: %s\n", fileBuffer);
+            }
+            else{
+                send(socket, "NO", 3, 0); //sends size of file buffer 
+                char* ok = malloc(sizeof(char) * 3);
+                recv(socket, ok, 3, 0); //gets confirmation
+
+            }
+            
 
 
 
@@ -1980,9 +2239,9 @@ int connectToServer(){
     
     return 0;  
 }
-bool canCommit(int socket,char*projectName){
+bool canCommit(char*projectName){
      struct dirent *de; 
-    DIR *dr = opendir(projectName);
+    DIR *dr = opendir(projectName);     // do the stat thing
     if (dr == NULL)
     {
         printf("Client does not have folder\n");
@@ -2019,7 +2278,38 @@ bool canCommit(int socket,char*projectName){
     return true;
     
 }
+bool canUpgrade(char*projectName){
+     struct dirent *de;         //do the stat thing instead
+    DIR *dr = opendir(projectName);
+    if (dr == NULL)
+    {
+        printf("Project Does not exist on Client\n");
+        return false;
+    }
+    bool hasUpdate = false;
+     while ((de = readdir(dr)) != NULL) 
+     {
+        if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
+        {
+            if( strcmp(de->d_name,".Conflict")==0)
+            {
+                printf("**Found a .Conflict File! Cannot Commit!**");
+                return false;
+            }
+            if (strcmp(de->d_name,".Update")==0)
+            {
+              hasUpdate = true;
 
+            }
+        }
+     }
+
+     if (!hasUpdate)
+        return false;
+    
+    return true;
+    
+}
 int main(int argc, char **argv)
 {
     char*host;
@@ -2035,14 +2325,7 @@ int main(int argc, char **argv)
          configure(host,port1);
         }
        
-        if (strcmp(argv[1],"getFiles")==0){
-            
-           int sockfd = connectToServer(argv[1], argv[2]);
-           char* getFile = "getFiles";
-           write(sockfd, getFile, strlen(getFile) + 1);
-           getFiles(sockfd, argv[2]);
-           close(sockfd);
-        }
+       
         if (strcmp(argv[1],"create")==0){
             int socket =  connectToServer();
             char command[7] = "create";
@@ -2078,6 +2361,7 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                 printf("Project does not exist on Server!\n");
                 return;
             }
 
@@ -2094,6 +2378,10 @@ int main(int argc, char **argv)
         }
         
         if (strcmp(argv[1],"commit")==0){
+
+             if (! canCommit(argv[2]))
+                return;
+
             int socket =  connectToServer();
             char command[7] = "commit";
             send(socket,command,7,0);
@@ -2107,10 +2395,11 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                 printf("Project does not exist on Server!\n");
                 return;
             }
 
-            if (canCommit(socket,argv[2]))
+           
             commit(argv[2], socket);  
         }
         if (strcmp(argv[1],"push")==0){
@@ -2127,6 +2416,7 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                 printf("Project does not exist on Server!\n");
                 return;
             }
 
@@ -2146,6 +2436,7 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                 printf("Project does not exist on Server!\n");
                 return;
             }
 
@@ -2165,6 +2456,7 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                 printf("Project does not exist on Server!\n");
                 return;
             }
 
@@ -2184,6 +2476,7 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                 printf("Project does not exist on Server!\n");
                 return;
             }
 
@@ -2203,33 +2496,38 @@ int main(int argc, char **argv)
 
             if (strcmp(reply ,"DNE") == 0)
             {
+                printf("Project does not exist on Server!\n");
                 return;
             }
             
             update(argv[2],socket);
         }
-        if (strcmp(argv[1],"lock")==0){
+
+        if (strcmp(argv[1],"upgrade")==0){
+            if (! canUpgrade(argv[2]))
+                return;
+
             int socket = connectToServer();
-            char command[5] = "lock";
-            send(socket,command,5,0);
+            char command[8] = "upgrade";
+            send(socket,command,8,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket,reply,50,0);
             printf("Reply: %s\n", reply);
-            send(socket,argv[2],strlen(argv[2]),0);
 
-            
-        }
-        if (strcmp(argv[1],"lock1")==0){
-             int socket = connectToServer();
-            char command[6] = "lock1";
-            send(socket,command,6,0);
-            char* reply = malloc(50* sizeof(char));
-            recv(socket,reply,50,0);
-            printf("Reply: %s\n", reply);
-            send(socket,argv[2],strlen(argv[2]),0);
+            send(socket, argv[2], strlen(argv[2]) + 1 , 0); //sends name of the file to be created to check server list
+            reply = malloc(50* sizeof(char));
+            recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
 
+            if (strcmp(reply ,"DNE") == 0)
+            {
+                printf("Project Does not exist on Server!\n");
+                return;
+            }
             
+              upgrade(argv[2],socket);
         }
+       
+       
 
        
         return 0;

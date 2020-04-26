@@ -959,6 +959,25 @@ void writeNewFiles(int fd,char*fileBuffer,bool empty){
 if (!empty)
     write(fd,fileBuffer,strlen(fileBuffer));
 }
+
+void upgrade(int sock)
+{
+
+        
+     char projectName[30];
+     recv(sock, projectName, 30, 0); //gets name of project
+     DIR *dx1 =  opendir(projectName);
+     if (!dx1){
+        printf("Project does not exist");
+        send(sock, "DNE", 4, 0);
+        return;
+     }
+     closedir(dx1);
+     send(sock,"Got Name", 9 ,0); //sends confirmation it got name
+     printf("projName: %s\n", projectName);
+
+
+}
 void push(int sock)
 {
     /*
@@ -971,6 +990,13 @@ void push(int sock)
     
      char projectName[30];
      recv(sock, projectName, 30, 0); //gets name of project
+     DIR *dx1 =  opendir(projectName);
+     if (!dx1){
+        printf("Project does not exist");
+        send(sock, "DNE", 4, 0);
+        return;
+     }
+     closedir(dx1);
      send(sock,"Got Name", 9 ,0); //sends confirmation it got name
      printf("projName: %s\n", projectName);
 
@@ -1010,6 +1036,7 @@ void push(int sock)
 
     //printf("Client Commit:\n%s", clientCommitFile);
 
+
     
     struct dirent *dp, *dx;
     DIR *dir = opendir(projectName); //opens project directory
@@ -1039,6 +1066,7 @@ void push(int sock)
         return;
     }
   
+
     
     //otherwise loop through and delete all .Commit files that are not equal to the matching one.
         char commitExt[9];
@@ -1161,13 +1189,7 @@ void push(int sock)
                 }
 
        
-      /* File* temp = cHead;
-        while (temp!= NULL)
-        {
-            printf("%d\t%s\t%s\n", temp->version, temp->filePath, temp->hash);
-            temp = temp->next;
-        }*/
-
+     
 
         //Run through manifest and create Nodes
         //run through commit and look for all "delete files" and "modify" options
@@ -1189,7 +1211,7 @@ void push(int sock)
     }
     manFD = open(manifestPath,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);  
 
-    char versionBuff[20];
+    char versionBuff[20];       //turn manifestversion (already incremented) into a char*
     sprintf(versionBuff,"%d",manifestVersion);
     write(manFD,versionBuff,strlen(versionBuff));
     char nL = '\n';
@@ -1210,20 +1232,30 @@ void push(int sock)
             char* fileSize = malloc (sizeof(char) * 10);
             fileSize[0] = '\0';
             recv(sock, fileSize, 10, 0); //gets size of file buffer 
-            send(sock, "Confirm", 8, 0); //sends confirmation it got the file size 
+            if (strcmp(fileSize, "NO") == 0)
+            {
+                send(sock, "OK", 3, 0);
+            }
+            else
+            {          
+                send(sock, "Confirm", 8, 0); //sends confirmation it got the file size 
 
-            int size = atoi(fileSize);
+                int size = atoi(fileSize);
 
-            printf("Length: %d\n", size);
+                printf("Length: %d\n", size);
 
-            char* fileBuffer = malloc(sizeof(char) * size);
-            recv(sock, fileBuffer, size+1, 0); //gets file buffer
-            send(sock, "Confirm", 8, 0); //sends confirmation it got the file buffer 
+                char* fileBuffer = malloc(sizeof(char) * size);
+                recv(sock, fileBuffer, size+1, 0); //gets file buffer
+                send(sock, "Confirm", 8, 0); //sends confirmation it got the file buffer 
 
-            printf("fileBuffer: %s\n", fileBuffer);
-            int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);
-            writeNewFiles(fd,fileBuffer,false);
-            close(fd);
+                printf("fileBuffer: %s\n", fileBuffer);
+                int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);
+                writeNewFiles(fd,fileBuffer,false);
+                close(fd);
+                
+            }
+            
+
         }
 
         cHead2 = cHead2->next;
@@ -1648,6 +1680,40 @@ void *server_handler (void *fd_pointer)
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             update(sock); 
+            printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
+            return;
+        }
+    }
+      if (strcmp(command, "upgrade") == 0)
+    {
+        printf("got Command for upgrade\n");
+        char* replyCommand = "Got The Command for upgrade";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+
+        char* projectName = malloc(sizeof(char) * 50);
+        recv(sock, projectName, 50, 0); //gets project name and stores it in projectName variable
+        
+
+        DIR *dp = opendir(projectName);
+        if(!dp){
+            char* replyName = "DNE";
+            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            return;
+        }
+        else{
+            closedir(dp); //closes the directory check
+            char* replyName = "Got Name";
+            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            
+            int mutexPosition = searchProject(head, projectName); 
+            if (mutexPosition == -1) //if this is -1 it means the project does not exist
+            {
+                addProject(&head, projectName); //adds project to the linked list
+                mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
+            }
+
+            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
+            upgrade(sock); 
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
             return;
         }
