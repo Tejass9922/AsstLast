@@ -1399,6 +1399,22 @@ void commit(char* projectName, int socket){
     return;
    
 }
+void rollback(char* projectName,int version, int socket){
+
+    int len = strlen(projectName)+1; //allocates mem for project name
+    send(socket,projectName,len,0); //sends project name
+    char*reply = malloc(sizeof(char)*4);
+    recv(socket,reply,10,0);
+    if (strcmp(reply,"DNE")==0){
+        printf("project does not exist on server!\n");
+        return;
+    }
+  
+   char versionBuff[20];
+    sprintf(versionBuff,"%d",version);
+    send(socket,versionBuff,strlen(versionBuff)+1,0);
+
+}
 void writeManifest(int version,char*filePath, char*hash, int fd){
     char sp = ' ';
     char nL = '\n';
@@ -2622,6 +2638,31 @@ int main(int argc, char **argv)
             }
             
               upgrade(argv[2],socket);
+        }
+
+
+        if (strcmp(argv[1],"rollback")==0){
+         
+
+            int socket = connectToServer();
+            char command[9] = "rollback";
+            send(socket,command,9,0);
+            char* reply = malloc(50* sizeof(char));
+            recv(socket,reply,50,0);
+            printf("Reply: %s\n", reply);
+
+            send(socket, argv[2], strlen(argv[2]) + 1 , 0); //sends name of the file to be created to check server list
+            reply = malloc(50* sizeof(char));
+            recv(socket, reply, 50, 0); //gets confirmation that server got the name of the project
+
+            if (strcmp(reply ,"DNE") == 0)
+            {
+                printf("Project Does not exist on Server!\n");
+                return;
+            }
+            int version = atoi(argv[3]);
+            
+             rollback(argv[2],version,socket);
         }
        
        

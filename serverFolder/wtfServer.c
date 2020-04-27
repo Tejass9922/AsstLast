@@ -1059,6 +1059,138 @@ void upgrade(int sock)
 
 
 }
+
+char *strrevx(char *str)
+{
+      char *p1, *p2;
+
+      if (! str || ! *str)
+            return str;
+      for (p1 = str, p2 = str + strlen(str) - 1; p2 > p1; ++p1, --p2)
+      {
+            *p1 ^= *p2;
+            *p2 ^= *p1;
+            *p1 ^= *p2;
+      }
+      return str;
+}
+
+int testExt(char*path,int version){
+
+     char*buffer = malloc(sizeof(char)*1);
+    buffer[0]= '\0';
+    int i = strlen(path)-1;
+   
+    while (i>=0)
+    {
+        if (path[i]=='_'){
+            break;  
+        }
+       
+            int len = strlen(buffer);
+            buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+            buffer[len] = path[i];
+            buffer[len+1] = '\0';
+            
+    i--;
+    }
+    char* revBuf = strrevx(buffer);
+  
+    if (version==atoi(buffer)){
+      
+       return 0;
+    }
+    else if (version<atoi(buffer))
+    {
+       return -1;
+    }
+   
+    return 1;
+    
+
+}
+
+void rollback(int sock){
+//Get project name
+
+  char projectName[30];
+     recv(sock, projectName, 30, 0); //gets name of project
+     DIR *dx1 =  opendir(projectName);
+     if (!dx1){
+        printf("Project does not exist");
+        send(sock, "DNE\0", 4, 0);
+        return;
+     }
+     closedir(dx1);
+     send(sock,"Got Name\0", 9 ,0); //sends confirmation it got name
+     char*versionBuff = (malloc(sizeof(char)*20));
+     recv(sock,versionBuff,20,0);
+    
+     int version = atoi(versionBuff);
+    
+    char olderVersionsPath [strlen(projectName)+15];
+    strcpy(olderVersionsPath,"olderVersions/");
+    strcat(olderVersionsPath,projectName);
+    
+    
+    struct dirent *de;  
+    DIR* dr = opendir(olderVersionsPath);
+    if (dr == NULL)  
+    { 
+        printf("OlderVersins of this project does not Exist!\n" ); 
+        return;
+        
+    } 
+    int loop_check = 0;
+    bool matchFound = false;
+    char* matchPath;
+    while ((de = readdir(dr)) != NULL) 
+    {
+     if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name,"HuffmanCodebook")!=0)
+     {
+        char path[1000];
+         strcpy(path, olderVersionsPath);
+            strcat(path, "/");
+            strcat(path, de->d_name);
+            int dir_version = testExt(de->d_name,version);
+         
+         if (dir_version==0){
+            matchFound=true;
+             char removeX[300];
+             strcpy(removeX,"rm -r ");
+             strcat(removeX,projectName);
+             system(removeX);
+             
+             char copy[300];
+            strcpy(copy,"cp -r ");
+            strcat(copy,path);
+            strcat(copy,"/ ");
+            strcat(copy,projectName);
+            strcat(copy,"/");
+            system(copy);
+
+            char removeY[300];
+            strcpy(removeY,"rm -r ");
+             strcat(removeY,path);
+             system(removeY);
+           
+         }
+         else if (dir_version==-1){
+             printf("Remove: %s\n",path);
+             char removeY[300];
+            strcpy(removeY,"rm -r ");
+             strcat(removeY,path);
+             system(removeY);
+         }
+
+        }
+    }
+  
+  
+    closedir(dr);
+
+
+}
 void push(int sock)
 {
     /*
@@ -1867,8 +1999,41 @@ void *server_handler (void *fd_pointer)
             printf("Name exists\n");
         }
         
+    }
+
+    if (strcmp(command, "rollback") == 0)
+    {
+        printf("got Command for rollback\n");
+        char* replyCommand = "Got The Command for rollback";
+        write(sock, replyCommand, strlen(replyCommand) + 1);  
+
+        char* projectName = malloc(sizeof(char) * 50);
+        recv(sock, projectName, 50, 0); //gets project name and stores it in projectName variable
         
-        
+
+        DIR *dp = opendir(projectName);
+        if(!dp){
+            char* replyName = "DNE";
+            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            return;
+        }
+        else{
+            closedir(dp); //closes the directory check
+            char* replyName = "Got Name";
+            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            
+            int mutexPosition = searchProject(head, projectName); 
+            if (mutexPosition == -1) //if this is -1 it means the project does not exist (inside the mutex array)
+            {
+                addProject(&head, projectName); //adds project to the linked list
+                mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
+            }
+
+            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
+            rollback(sock);
+            printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
+            return;
+        }
     }
     command = malloc (100 * sizeof(char));
    
