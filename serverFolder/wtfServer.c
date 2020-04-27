@@ -1133,7 +1133,40 @@ void rollback(int sock){
     strcat(olderVersionsPath,projectName);
     
     
-    struct dirent *de;  
+    struct dirent *de, *dx;
+    
+
+    bool matchFound = false;
+     DIR* da = opendir(olderVersionsPath);
+    printf("reached\n");
+    if (da == NULL)  
+    { 
+        printf("OlderVersins of this project does not Exist!\n" ); 
+        return;
+        
+    } 
+    int loop_check = 0;
+    char* matchPath;
+    while ((dx = readdir(da)) != NULL) 
+    {
+        if (strcmp(dx->d_name, ".") != 0 && strcmp(dx->d_name, "..") != 0)
+        {
+        int dir_versionX = testExt(dx->d_name,version);
+         
+         if (dir_versionX==0){
+            matchFound = true;
+         }
+        
+        } 
+    }
+ 
+    closedir(da);
+    
+
+ if (!matchFound){
+        printf("Version number does not exist!\n");
+    }
+else{
     DIR* dr = opendir(olderVersionsPath);
     if (dr == NULL)  
     { 
@@ -1141,12 +1174,10 @@ void rollback(int sock){
         return;
         
     } 
-    int loop_check = 0;
-    bool matchFound = false;
-    char* matchPath;
+   
     while ((de = readdir(dr)) != NULL) 
     {
-     if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0 && strcmp(de->d_name,"HuffmanCodebook")!=0)
+     if (strcmp(de->d_name, ".") != 0 && strcmp(de->d_name, "..") != 0)
      {
         char path[1000];
          strcpy(path, olderVersionsPath);
@@ -1155,12 +1186,12 @@ void rollback(int sock){
             int dir_version = testExt(de->d_name,version);
          
          if (dir_version==0){
-            matchFound=true;
+           
              char removeX[300];
              strcpy(removeX,"rm -r ");
              strcat(removeX,projectName);
              system(removeX);
-             
+
              char copy[300];
             strcpy(copy,"cp -r ");
             strcat(copy,path);
@@ -1186,9 +1217,9 @@ void rollback(int sock){
         }
     }
   
-  
     closedir(dr);
-
+}
+    return;
 
 }
 void push(int sock)
