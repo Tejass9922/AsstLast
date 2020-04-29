@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <netdb.h> 
 
-
+//debug 
 char* readInFile(char* fileName);
 typedef struct File{
     int version;
