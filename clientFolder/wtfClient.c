@@ -1839,32 +1839,36 @@ void add(char*projectName, char*fileName)
             strcat(path,"/");
             strcat(path,fileName);
            
+
+             File* tempMan = NULL;
+             char manifestPath[strlen(projectName)+11];
+             strcpy(manifestPath,projectName);
+             strcat(manifestPath,"/.Manifest");
+             char*buffer = readInFile(manifestPath);
+            tempMan = tokenizeManifest(tempMan, buffer);
+
+            while (tempMan!=NULL){
+
+                if(strcmp(tempMan->filePath,path)==0){
+                    printf("File already Exists on the Manifest!\n");
+                    return;
+                }
+                tempMan = tempMan->next;
+            }
+
+
+
             int fd1 = open(path,O_RDONLY);
+
             if (fd1!=-1){
 
             char hash[SHA_DIGEST_LENGTH];
             char hexHash[SHA_DIGEST_LENGTH];
             printf("shaLength: %d\n", SHA_DIGEST_LENGTH);
-            /*
-            if (fd1!=-1){
-                int status;
-                char c;
-                char*buffer = (char*)malloc(sizeof(char)*1);
-                do{
-                     status = read(fd1,&c,1);
-                    if (status<=0)
-                        break;
-                    int len = strlen(buffer);
-                    buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
-                    buffer[len] = c;
-                    buffer[len+1] = '\0'; 
-                }while(status>0); 
-            }
-            */
+           
 
             char* buffer = readInFile(path);
-            
-            
+
             char* test  = (char*)(malloc(sizeof(char)*41));
             printf("reached1\n"); 
             test = computeHash(path);
@@ -2330,11 +2334,12 @@ int connectToServer(){
         //printf("portNumber: %d\n", port1);
         servaddr.sin_port = htons(port1);
         servaddr.sin_addr.s_addr = inet_addr(info.IP);
+        printf("%s\n",info.IP);
         int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
         while (cx==-1){
-        printf("trying to reconnect\n");
-        setTimeout(3000);
-        cx = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
+            printf("trying to reconnect\n");
+            setTimeout(3000);
+            cx = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
         }
 
         return sockfd;
