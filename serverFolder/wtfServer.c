@@ -18,6 +18,7 @@
 #include <openssl/err.h>
 
 //added return statments at the end of each function to make sure locks work properly 
+//check to make sure this did not F anything up lmfaoooo
 //test
 static pthread_mutex_t projectMutexes[1000];
 
@@ -575,7 +576,7 @@ void createProject(int sock){
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
         char nL = '\n';
-        char c = '1';
+        char c = '0';
         write(filedescriptor,&c,1);
         write(filedescriptor,&nL,1);
       
