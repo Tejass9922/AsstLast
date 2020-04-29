@@ -725,6 +725,11 @@ void history(char * projectName, int socket)
         printf("Folder / File does not exist\n"); //check to see if folder exists on server side, if not it stops
         return;
     }
+     if (strcmp(recieveSize, "EMPTY") == 0)
+    {
+        printf("History is empty\n"); //check to see if folder exists on server side, if not it stops
+        return;
+    }
     int size = atoi(recieveSize);
     send(socket,"Got Size", 8 ,0); //sends a confirmation that it got the size 
     char* historyBuffer =(char*)(malloc(sizeof(char)*size));
