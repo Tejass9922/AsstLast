@@ -17,9 +17,7 @@
 #include <dirent.h>
 #include <openssl/err.h>
 
-//added return statments at the end of each function to make sure locks work properly 
-//check to make sure this did not F anything up lmfaoooo
-//test
+//debug
 static pthread_mutex_t projectMutexes[1000];
 
 typedef struct Project{
@@ -264,10 +262,10 @@ void history(int sock){
         printf("Got requested path\n");
     }
 
-     char path[strlen(projectName)+5+strlen(".history")];
+     char path[strlen(projectName)+5+strlen(".History")];
             strcpy(path,projectName);
             strcat(path,"/");
-            strcat(path,".history");
+            strcat(path,".History");
 
 
 
@@ -288,6 +286,11 @@ void history(int sock){
                 buffer = readInFile(path); //opens and store the history file into a buffer
                 printf("History Buffer: %s\n", buffer);
                 int length = strlen(buffer);
+                if (length <= 0){
+                    send(sock,"EMPTY", 6 ,0);
+                    printf("No History\n");
+                    return;
+                }
                 char size[10];
                 printf("length: %d\n", length); 
                 sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client
@@ -337,7 +340,7 @@ void currentVersion(int sock){
             char* buffer = malloc(sizeof(char) * (strlen(readInFile(path))));
             buffer = readInFile(path); //opens and store the current version file into a buffer
             printf("Current Version: \n%s\n", buffer);
-            int length = strlen(buffer);
+            int length = strlen(buffer) + 1;
             char size[10];
             printf("length: %d\n", length); 
             sprintf(size,"%d",length); //changes the integer into a char array to be sent over to the client

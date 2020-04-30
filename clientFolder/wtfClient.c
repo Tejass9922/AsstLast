@@ -17,7 +17,7 @@
 #include <openssl/err.h>
 #include <netdb.h> 
 
-
+//debug 
 char* readInFile(char* fileName);
 typedef struct File{
     int version;
@@ -723,6 +723,11 @@ void history(char * projectName, int socket)
     if (strcmp(recieveSize, "DNE") == 0)
     {
         printf("Folder / File does not exist\n"); //check to see if folder exists on server side, if not it stops
+        return;
+    }
+     if (strcmp(recieveSize, "EMPTY") == 0)
+    {
+        printf("History is empty\n"); //check to see if folder exists on server side, if not it stops
         return;
     }
     int size = atoi(recieveSize);
