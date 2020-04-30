@@ -576,7 +576,7 @@ void createProject(int sock){
         int filedescriptor = open(filePath, O_RDWR | O_APPEND | O_CREAT,0777); 
         printf("fD %d\n",filedescriptor);
         char nL = '\n';
-        char c = '1';
+        char c = '0';
         write(filedescriptor,&c,1);
         write(filedescriptor,&nL,1);
       
