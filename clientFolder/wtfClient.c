@@ -422,6 +422,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
                     else if  (! (sheadTemp->version < cheadTemp->version )) //if file paths are the same, hashes are different
                     {
                         printf("**Synch projects first!**\n");
+                        send(socket, "Stop\0" ,5 , 0);
                         remove(commitFileName);
                        return; 
                         //delete .commit file if it exists
@@ -1609,6 +1610,8 @@ void upgrade(char* projectName, int socket)
             recv(socket, fileSize, 10, 0); //gets size of file buffer 
             if (strcmp(fileSize, "NO") == 0)
             {
+                int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);    //empty file handling
+                close(fd);
                 send(socket, "OK", 3, 0);
             }
             else
@@ -1755,6 +1758,11 @@ void push(char*projectName,int socket)
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
 
 
+    if (commitHead==NULL){
+        printf("Nothing to change1\n");
+        return;
+    }
+
     CommitFile* cHead2 = commitHead;
     while (cHead2 !=NULL)
     {
@@ -1807,7 +1815,7 @@ void push(char*projectName,int socket)
    }
    
   
-  //active commit? does that mean commit file per project on the server? or just one total commit file at a time? 
+  remove(commitFileName);
    
 }
 void setTimeout(int milliseconds)

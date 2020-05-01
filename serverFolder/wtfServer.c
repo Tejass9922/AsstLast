@@ -396,7 +396,7 @@ void commit(int socket){
 
             if (strcmp(commitNameSize, "Stop") == 0)
             {
-                printf("Project versions are different\n");
+                printf("Project versions are different or Synch projects\n");
                 return;
             }
 
@@ -1022,8 +1022,9 @@ void upgrade(int sock)
     {
         if ((cHead2->command == 'A') || (cHead2->command == 'M'))
         {
+          
             char* fileBuffer = readInFile(cHead2->filePath); //puts file into a buffer
-
+           
             int fileSize = strlen(fileBuffer); //gets file buffer size
 
             if (fileSize != 0)
@@ -1295,8 +1296,6 @@ void push(int sock)
     while ((dp = readdir(dir)) != NULL)
     {
          char*commmitExtraction = &commitPath[strlen(projectName)+1];
-      
-        
         if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0 && strcmp(dp->d_name, commmitExtraction) == 0)
         {
             printf("Found a match between Commits!, starting to push!\n");   //loops through directory until we find a mathch between what was sent and what we have (.Commit files)
@@ -1304,6 +1303,8 @@ void push(int sock)
 
         }
     }
+
+   remove(commitPath);
     closedir(dir);
        DIR *dir2 = opendir(projectName); //open the directory once more to delete any other potential .Commit files
     if (!same)
@@ -1436,16 +1437,6 @@ void push(int sock)
                 }
 
        
-     
-
-        //Run through manifest and create Nodes
-        //run through commit and look for all "delete files" and "modify" options
-            //find those in the linked list and modify / delete from the linked list
-        //next run through all the add file commands in the commit file
-            // add new nodes to the linked list 
-        //write back to the manifest file while incrementing the proj.version
-        //write out a history file 
-     //  printf("Commit file:\n%s\n",clientCommitFile);
         CommitFile* commitHead = NULL;
         commitHead = tokenizeCommit(clientCommitFile);
 
@@ -1455,6 +1446,10 @@ void push(int sock)
     int manFD = open(manifestPath,O_RDWR|O_APPEND);
     if (manFD!=-1){
         printf("*Overwriting Manifest File**\n");
+    }
+    if (commitHead==NULL){
+        printf("Nothing to change1\n");
+        return;
     }
     manFD = open(manifestPath,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);  
 
@@ -1481,6 +1476,8 @@ void push(int sock)
             recv(sock, fileSize, 10, 0); //gets size of file buffer 
             if (strcmp(fileSize, "NO") == 0)
             {
+                int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777); //empty file handling
+                close(fd);
                 send(sock, "OK", 3, 0);
             }
             else
@@ -1502,6 +1499,7 @@ void push(int sock)
                 
             }
             
+            
 
         }
 
@@ -1516,6 +1514,7 @@ void push(int sock)
        }
       cHead3 =  cHead3->next;
     }
+ 
  
  return;
 }
