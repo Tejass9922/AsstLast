@@ -1648,7 +1648,32 @@ void upgrade(char* projectName, int socket)
       cHead3 =  cHead3->next;
     }
   remove(updateFileName);
-  
+    char hostbuffer[256]; 
+        char *IPbuffer = malloc(16); 
+        struct hostent *host_entry; 
+        int hostname; 
+    
+        // To retrieve hostname 
+        hostname = gethostname(hostbuffer, sizeof(hostbuffer)); 
+        checkHostName(hostname); 
+    
+        // To retrieve host information 
+        host_entry = gethostbyname(hostbuffer); 
+        checkHostEntry(host_entry); 
+    
+        // To convert an Internet network 
+        // address into ASCII string 
+        IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
+    
+        printf("Hostname: %s\n", hostbuffer); 
+        printf("Host IP: %s\n", IPbuffer);
+
+        char commitFileNameDelete[strlen(IPbuffer)+3+strlen(projectName)+7];
+        strcpy(commitFileNameDelete,projectName);
+        strcat(commitFileNameDelete,"/.Commit_");
+        strcat(commitFileNameDelete,IPbuffer);
+        printf("%s\n",commitFileNameDelete);
+        remove(commitFileNameDelete);
   return;
 
 }
