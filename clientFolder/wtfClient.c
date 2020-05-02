@@ -2354,6 +2354,7 @@ int getFiles(int sockfd, char* fileName)
 int connectToServer(){
      getConfigureDetails();
       if (getConfigureDetails()!=-1){ 
+        struct hostent *server;
         int sockfd;
         char* buffer = malloc(sizeof(char) *1);
         char server_reply[2000];
@@ -2370,9 +2371,14 @@ int connectToServer(){
         bzero(&servaddr,sizeof (servaddr));
         servaddr.sin_family = AF_INET;
         int port1 = (info.portNumber);
-        //printf("portNumber: %d\n", port1);
         servaddr.sin_port = htons(port1);
-        servaddr.sin_addr.s_addr = inet_addr(info.IP);
+        server = gethostbyname(info.IP);
+        bcopy((char *)server->h_addr_list[0], 
+         (char *)&servaddr.sin_addr.s_addr,
+         server->h_length);
+        
+
+        //servaddr.sin_addr.s_addr = inet_addr(info.IP);
         printf("%s\n",info.IP);
         int cx  = connect(sockfd, (struct sockaddr *)&servaddr,sizeof(servaddr));
         while (cx==-1){

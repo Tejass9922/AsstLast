@@ -1607,7 +1607,8 @@ int main(int argc, char **argv)
   
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
-   servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+   servaddr.sin_addr.s_addr = INADDR_ANY;
+   //servaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
    int port = atoi(argv[1]);
    servaddr.sin_port = htons(port);
    
@@ -1674,7 +1675,7 @@ void *server_handler (void *fd_pointer)
         char* projectName = malloc(sizeof(char) * 50);
         recv(sock, projectName, 50, 0); //gets project name and stores it in projectName variable
         char* replyName = "reply Name";
-        send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name
+        send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name
 
         int mutexPosition = searchProject(head, projectName); //checks to see if project already exists
         if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1710,14 +1711,14 @@ void *server_handler (void *fd_pointer)
          printf("reached\n");
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             printf("Project does not exist\n");
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1755,13 +1756,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
 
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1792,13 +1793,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
            
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1828,13 +1829,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
           
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1865,13 +1866,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1902,13 +1903,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
            
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1940,13 +1941,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
@@ -1976,13 +1977,13 @@ void *server_handler (void *fd_pointer)
         DIR *dp = opendir(projectName);
         if(!dp){
             char* replyName = "DNE";
-            send(sock, replyName, strlen(replyName), 0); //if project DNE exists it tells the client
+            send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
             return;
         }
         else{
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
-            send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
+            send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
