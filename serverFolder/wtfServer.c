@@ -20,6 +20,8 @@
 //debug
 static pthread_mutex_t projectMutexes[1000];
 
+static pthread_mutex_t headMutex; 
+
 typedef struct Project{
     char* projectName;
     struct Project* next;
@@ -1513,8 +1515,23 @@ void push(int sock)
            remove(cHead3->filePath);
        }
       cHead3 =  cHead3->next;
+
+
+
     }
  
+
+    char* historyPath = malloc(strlen(projectName)+10);
+    strcpy(historyPath, projectName);
+    strcat(historyPath, "/.History");
+    int historyFile = open(historyPath,O_RDWR|O_APPEND|O_CREAT,0777);
+    
+    write(historyFile, clientCommitFile, strlen(clientCommitFile));
+  
+    write(historyFile,&nL,1);
+
+    close(historyFile);
+
  
  return;
 }
@@ -1573,7 +1590,7 @@ int main(int argc, char **argv)
         i++;
     }
 
-    printf("OKKKEr\n");
+    pthread_mutex_init(&headMutex, NULL);
 
 
     int listenfd, connfd, *new_sock;
@@ -1662,7 +1679,9 @@ void *server_handler (void *fd_pointer)
         int mutexPosition = searchProject(head, projectName); //checks to see if project already exists
         if (mutexPosition == -1) //if this is -1 it means the project does not exist
         {
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             addProject(&head, projectName); //adds project
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
             mutexPosition = searchProject(head, projectName); //gets position of the project
             printf("Lock Check: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //lock mutex for that project
             createProject(sock); //does function 
@@ -1703,7 +1722,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1745,7 +1766,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1780,7 +1803,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1814,7 +1839,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1849,7 +1876,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1884,7 +1913,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1920,7 +1951,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 
@@ -1954,7 +1987,9 @@ void *server_handler (void *fd_pointer)
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                pthread_mutex_lock(&headMutex); //locks head Node for projects
+                addProject(&head, projectName); //adds project
+                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
 

@@ -500,7 +500,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 
         printf("\n");
 
-       int fd = open(commitFileName,O_RDONLY);
+       /*int fd = open(commitFileName,O_RDONLY);
        char c;
        int status = 0;
        char buffer[1000000];
@@ -513,13 +513,13 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
           buffer[counter] = c;
           counter++;
 
-       }while (status>0);
+       }while (status>0);*/
             
   
 
-    char*commitBuffer = &buffer[0];
+    char*commitBuffer = readInFile(commitFileName);
    
-   close(fd);
+  // close(fd);
        
         printf("reached\n");
       
@@ -1751,8 +1751,8 @@ void push(char*projectName,int socket)
     */
     
 
-   int fd = open(commitFileName,O_RDONLY);
-   if (fd!=-1){
+  /*int fd = open(commitFileName,O_RDONLY);
+   
       char c;
        int status = 0;
        char buffer[1000000];
@@ -1767,7 +1767,8 @@ void push(char*projectName,int socket)
 
        }while (status>0);
         char*commitBuffer = &buffer[0];                             //we used the sure fire way to already put the commit file into a buffer (cmmit bBffer)
-         close(fd);
+         close(fd);*/
+          char*commitBuffer = readInFile(commitFileName); 
         CommitFile* commitHead = tokenizeCommit(commitBuffer);      //tokenizes commit Buffer
         int length = strlen(commitBuffer);
         printf("%d\n",length);
@@ -1777,8 +1778,8 @@ void push(char*projectName,int socket)
        
         send(socket, size ,strlen(size), 0); //sends size of file
 
-        char temp[8];
-        recv(socket,temp,8,0);//gets confirmation from server that it got the size 
+        char tempor[8];
+        recv(socket,tempor,8,0);//gets confirmation from server that it got the size 
        
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
 
@@ -1837,7 +1838,7 @@ void push(char*projectName,int socket)
     
 
 
-   }
+   
    
   
   remove(commitFileName);
