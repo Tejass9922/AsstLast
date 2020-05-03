@@ -16,6 +16,7 @@
 #include <openssl/sha.h>
 #include <dirent.h>
 #include <openssl/err.h>
+#include <signal.h>
 
 //debug
 static pthread_mutex_t projectMutexes[1000];
@@ -126,7 +127,7 @@ void listFilesRecursively(char *basePath, int socket)
             if (is_regular_file(path) == 1) //check to see if it is a file or directory 
             {
                 char* file = "FILE";
-                send(socket,file,strlen(file),0); //sends file message 
+                send(socket,file,strlen(file) + 1,0); //sends file message 
                 char* confirmation = malloc(sizeof(char) * 9);
                 recv(socket, confirmation, 100, 0); //gets cofirmation from client 
                 int fileNameLength = strlen(path)+1; //gets the lenghth of the file path
@@ -144,8 +145,8 @@ void listFilesRecursively(char *basePath, int socket)
                 recv(socket,nameSizeConfirm,8,0); //client confirms it got the namE
 
                 
-                int Fsize = 1000;//strlen(readInFile(tPath)); //gets size of file
-                char* fileBuffer = (char*) malloc(sizeof(char) * Fsize); //mallocs a buffer for the file 
+             
+                char* fileBuffer;  //mallocs a buffer for the file 
                 fileBuffer = readInFile(tPath); //puts file into a buffer
                 if (fileBuffer[0] != '\0')
                 {
@@ -154,6 +155,7 @@ void listFilesRecursively(char *basePath, int socket)
                     recv(socket,emptyCheck,4,0); //recieved confimration from client that file is not empty 
 
                     char fileSizeArr[10]; 
+                    int Fsize = strlen(fileBuffer) + 1;
                     sprintf(fileSizeArr,"%d", Fsize); //changes the integer into a char array to be sent over to the client
                     send(socket,fileSizeArr,10,0); //sends the size of buffer
                     char FileSizeConfirm[8];
@@ -180,17 +182,18 @@ void listFilesRecursively(char *basePath, int socket)
             else
             {
                 char* file = "DIRE";
-                send(socket,file,strlen(file),0); //sends file message 
+                send(socket,file,strlen(file) + 1,0); //sends file message 
                 char* confirmation = malloc(sizeof(char) * 9);
                 recv(socket, confirmation, 100, 0); //gets cofirmation from client 
-                int direNameLength = strlen(path); //gets the lenghth of the file path
+                int direNameLength = strlen(path)+1; //gets the lenghth of the file path
                 char size[10];
                 //printf("length: %d\n", fileNameLength); 
                 sprintf(size,"%d",direNameLength); //changes the integer into a char array to be sent over to the client
-                send(socket,size,10,0); //sends the size of the path name 
+                send(socket,size,strlen(size) + 1,0); //sends the size of the path name 
                 char direSizeConfirm[8];
                 recv(socket, direSizeConfirm,8,0); //recieves a confirmation that the client got the size of the path name 
                 //printf("path: %s + Size: %d\n", path, direNameLength);
+                printf("PATH: %s\n", path);
                 send(socket,path,direNameLength,0); //sends actual file path name
                 char* confirmName = malloc(sizeof(char) * 9);
                 recv(socket, direSizeConfirm, 8,0); //client confirms it got the name
@@ -231,13 +234,13 @@ void checkout(int sock)
     { 
         printf("Project does not Exist\n");
         char* DNE = "DNE";
-        send(sock,DNE,strlen(DNE),0); //if folder DNE it sends an error message to client and stops 
+        send(sock,DNE,strlen(DNE) + 1,0); //if folder DNE it sends an error message to client and stops 
         return;        
     }
     else
     {
         char* reply = "Got Path";
-        send(sock,reply,strlen(reply),0); 
+        send(sock,reply,strlen(reply) + 1,0); 
        // listDirectoryRecursively(projectName);
 
         char* startMessage = malloc (sizeof(char) * 14);
@@ -604,7 +607,7 @@ void createProject(int sock){
             
     } 
         else{
-            write(sock,"PROJ_EXISTS",11);
+            write(sock,"PROJ_EXISTS",12);
             printf("\n**Project already Exists**\n");
         }
 
@@ -1275,6 +1278,12 @@ void push(int sock)
    
     char commitFileSize[10];
     recv(sock, commitFileSize, 10, 0); //gets size of file as a char*
+
+    if (strcmp(commitFileSize, "DNE") == 0)
+    {
+        printf("No commit file on the client side. Commit again!\n");
+        return;
+    }
             
     int commitSize = atoi(commitFileSize); //converts char* into an integer 
 
@@ -1313,6 +1322,7 @@ void push(int sock)
     {
         closedir(dir2);
         printf("Sent Commit file is not the same / does not exist on the server!\n");  //if we did not find a match origianlly, return
+        
         return;
     }
   
@@ -1580,9 +1590,17 @@ void update(int socket){
 }
 
 void *server_handler (void *fd_pointer);
-
+ void exitFunction()
+{ 
+    printf("Caught Exit!\n");
+}
 int main(int argc, char **argv)
 {
+  int  value = atexit(exitFunction); 
+    if (value != 0) { 
+      
+       printf("At exit failed nigga!\n");
+    } 
     int i = 0;
     while (i < 1000)
     {
@@ -1640,7 +1658,10 @@ int main(int argc, char **argv)
 		perror("Accecpt Failed");
 		return 1;
 	}
+
     
+  
+
 	return 0;
   
    //close(connfd);
@@ -1677,10 +1698,11 @@ void *server_handler (void *fd_pointer)
         char* replyName = "reply Name";
         send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name
 
+        pthread_mutex_lock(&headMutex); //locks head Node for projects
         int mutexPosition = searchProject(head, projectName); //checks to see if project already exists
         if (mutexPosition == -1) //if this is -1 it means the project does not exist
         {
-            pthread_mutex_lock(&headMutex); //locks head Node for projects
+            
             addProject(&head, projectName); //adds project
             pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
             mutexPosition = searchProject(head, projectName); //gets position of the project
@@ -1691,8 +1713,9 @@ void *server_handler (void *fd_pointer)
         }
         else
         {
-            char* exists = "PROJ_EXISTS";
-            write(sock, exists, strlen(exists) + 1);
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
+            char* exists = "PROJ_EXISTS\0";
+            send(sock, exists, strlen(exists) + 1, 0);
             return;
         }
     }
@@ -1720,14 +1743,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             printf("position: %d\n", mutexPosition);
@@ -1735,13 +1758,6 @@ void *server_handler (void *fd_pointer)
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
             return;
         }
-    }
-    if (strcmp(command, "getFiles") == 0)
-    {
-        printf("got Command to get files\n");
-        char* replyCommand = "Got The Command to get files";
-        write(sock, replyCommand, strlen(replyCommand) + 1);
-        returnFiles(sock);
     }
     if (strcmp(command, "commit") == 0)
     {
@@ -1764,14 +1780,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
 
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             commit(sock); 
@@ -1801,14 +1817,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
            
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             push(sock); 
@@ -1837,14 +1853,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
           
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             history(sock); 
@@ -1874,14 +1890,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             currentVersion(sock); 
@@ -1911,14 +1927,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
            
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             printf("position: %d\n", mutexPosition);
@@ -1948,15 +1964,15 @@ void *server_handler (void *fd_pointer)
             closedir(dp); //closes the directory check
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
-            
+
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             update(sock); 
@@ -1964,7 +1980,7 @@ void *server_handler (void *fd_pointer)
             return;
         }
     }
-      if (strcmp(command, "upgrade") == 0)
+    if (strcmp(command, "upgrade") == 0)
     {
         printf("got Command for upgrade\n");
         char* replyCommand = "Got The Command for upgrade";
@@ -1985,14 +2001,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName) + 1, 0);//sends confirmation it got the name (project exists)
             
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
             if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                pthread_mutex_lock(&headMutex); //locks head Node for projects
                 addProject(&head, projectName); //adds project
-                pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             upgrade(sock); 
@@ -2000,76 +2016,6 @@ void *server_handler (void *fd_pointer)
             return;
         }
     }
-    if (strcmp(command, "lock") == 0)
-    {
-        printf("got Command for update\n");
-        char* replyCommand = "Got The Command for lock";
-        write(sock, replyCommand, strlen(replyCommand) + 1);  
-        char* projName = malloc (sizeof(char) * 30);
-        recv(sock, projName, 30, 0);
-        //printf("%s\n", projName);
-        int mutexPosition = searchProject(head, projName); //check to see if the project exists and what 'place' in the linked list it is in
-        printf("Project Position: %d\n", mutexPosition);
-        if (mutexPosition == -1) //if this is -1 it means the project does not exist
-        {
-            addProject(&head, projName); //adds project to the linked list
-            mutexPosition = searchProject(head, projName); //updates the position of the mutex so that it can be initialized
-            printf("Updated Position: %d\n", mutexPosition); //prints new position of mutex 
-            //all mutexes are initialized in the main method
-            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition]));
-            //pthread_mutex_lock(&projectMutexes[mutexPosition]); //locks the mutex for that specific prjoject
-            Project* temp = head;
-            while (temp!= NULL)
-            {
-                printf("%s\n", temp->projectName);
-                temp = temp->next;
-            }
-
-            //destroy
-
-            printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition]));
-            //pthread_mutex_unlock(&projectMutexes[mutexPosition]); //unlocks the mutex for that specific project
-        }
-        else
-        {
-            printf("Name exists\n");
-        }
-        
-    }
-    if (strcmp(command, "lock1") == 0)
-    {
-        printf("got Command for update\n");
-        char* replyCommand = "Got The Command for lock1";
-        write(sock, replyCommand, strlen(replyCommand) + 1);  
-        char* projName = malloc (sizeof(char) * 30);
-        recv(sock, projName, 30, 0);
-        //printf("%s\n", projName);
-        int mutexPosition = searchProject(head, projName); //check to see if the project exists and what 'place' in the linked list it is in
-        printf("Project Position: %d\n", mutexPosition);
-        if (mutexPosition == -1) //if this is -1 it means the project does not exist
-        {
-            addProject(&head, projName); //adds project to the linked list
-            mutexPosition = searchProject(head, projName); //updates the position of the mutex so that it can be initialized
-            printf("Updated Position: %d\n", mutexPosition); //prints new position of mutex 
-            //all mutexes are initialized in the main method
-            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition]));
-            //pthread_mutex_lock(&projectMutexes[mutexPosition]); //locks the mutex for that specific prjoject
-            Project* temp = head;
-            while (temp!= NULL)
-            {
-                printf("%s\n", temp->projectName);
-                temp = temp->next;
-            }
-            printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition]));
-            //pthread_mutex_unlock(&projectMutexes[mutexPosition]); //unlocks the mutex for that specific project
-        }
-        else
-        {
-            printf("Name exists\n");
-        }
-        
-    }
-
     if (strcmp(command, "rollback") == 0)
     {
         printf("got Command for rollback\n");
@@ -2091,12 +2037,14 @@ void *server_handler (void *fd_pointer)
             char* replyName = "Got Name";
             send(sock, replyName, strlen(replyName), 0);//sends confirmation it got the name (project exists)
             
+            pthread_mutex_lock(&headMutex); //locks head Node for projects
             int mutexPosition = searchProject(head, projectName); 
-            if (mutexPosition == -1) //if this is -1 it means the project does not exist (inside the mutex array)
+            if (mutexPosition == -1) //if this is -1 it means the project does not exist
             {
-                addProject(&head, projectName); //adds project to the linked list
+                addProject(&head, projectName); //adds project
                 mutexPosition = searchProject(head, projectName); //updates the position of the mutex so that it can be initialized
             }
+            pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
             printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             rollback(sock);
@@ -2105,6 +2053,8 @@ void *server_handler (void *fd_pointer)
         }
     }
     command = malloc (100 * sizeof(char));
+
+    
    
 }
 

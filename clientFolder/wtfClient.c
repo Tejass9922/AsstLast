@@ -366,7 +366,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         else if ((sheadTemp==NULL) &&(cheadTemp!=NULL)){
             while (cheadTemp!=NULL){
                 printf("reached!*!\n");
-                printf("A %d %s %s\n",cheadTemp->version,cheadTemp->filePath,cheadTemp->hash);
+               printf("%s\n",cheadTemp->filePath);
                 writeCommit(commitFD,cheadTemp->version,cheadTemp->filePath,cheadTemp->hash,'A');
                 cheadTemp = cheadTemp->next;
             }
@@ -1220,6 +1220,7 @@ void commit(char* projectName, int socket){
     char*filePath;
     char*hash;
     buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
     int SNodeLength = 0;
     while (i<strlen(serverManifest))
     {
@@ -1231,6 +1232,7 @@ void commit(char* projectName, int socket){
                  version = atoi(buffer);
                  //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
@@ -1241,6 +1243,7 @@ void commit(char* projectName, int socket){
                //mem move gets ride of extra space at the beginning 
                //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             else if (count==2)
@@ -1250,6 +1253,7 @@ void commit(char* projectName, int socket){
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             //printf("Count: %d\n", count);
@@ -1265,6 +1269,8 @@ void commit(char* projectName, int socket){
             SNodeLength++;
             count = 0;
             i++;
+             buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
         }
         else
         {
@@ -1320,6 +1326,7 @@ void commit(char* projectName, int socket){
     //char*hash;
     int cNodeLength = 0;
     buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0]='\0';
 
     while (i<strlen(clientBuffer))
     {
@@ -1331,6 +1338,7 @@ void commit(char* projectName, int socket){
                  version = atoi(buffer);
                  //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
@@ -1341,6 +1349,7 @@ void commit(char* projectName, int socket){
                //mem move gets ride of extra space at the beginning 
                //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             else if (count==2)
@@ -1350,6 +1359,7 @@ void commit(char* projectName, int socket){
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             //printf("Count: %d\n", count);
@@ -1364,7 +1374,8 @@ void commit(char* projectName, int socket){
             insertFileNode(&cHead, tempNode);
             cNodeLength++;
             count = 0;
-           
+            buffer = malloc(sizeof(char) *1);
+            buffer[0] = '\0';
         }
         else
         {
@@ -1768,7 +1779,15 @@ void push(char*projectName,int socket)
        }while (status>0);
         char*commitBuffer = &buffer[0];                             //we used the sure fire way to already put the commit file into a buffer (cmmit bBffer)
          close(fd);*/
+       int fdTest = open(commitFileName,O_RDWR);
+       if (fdTest==-1){
+           printf("No commit file on Client side, Commit once again!\n");
+           send(socket, "DNE" , 4, 0); 
+           return;
+       }
+       close(fdTest);
           char*commitBuffer = readInFile(commitFileName); 
+        
         CommitFile* commitHead = tokenizeCommit(commitBuffer);      //tokenizes commit Buffer
         int length = strlen(commitBuffer);
         printf("%d\n",length);
@@ -1783,6 +1802,8 @@ void push(char*projectName,int socket)
        
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
 
+
+    char* Check = malloc(5 * sizeof(char));
 
     if (commitHead==NULL){
         printf("Nothing to change1\n");
@@ -2132,6 +2153,7 @@ void checkout(char* projectName, int socket){
 
     while (strcmp(getPrompt, "STOP") != 0)
     {
+        //printf("%s\n", getPrompt); 
         if (strcmp(getPrompt, "FILE")==0)
         {
             char* gotType = "Got Type";
@@ -2178,8 +2200,9 @@ void checkout(char* projectName, int socket){
             recv(socket, recieveSize, 10, 0); //gets size of the path name
             int Diresize = atoi(recieveSize); //turns char array of size into a usuable int
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
-            char* fileName = (char*) malloc(sizeof(char) * Diresize + 1); //allocates mem for the file path 
+            char* fileName = (char*) malloc(sizeof(char) * Diresize); //allocates mem for the file path 
             recv(socket, fileName, Diresize, 0); //gets the file path
+            printf("PATH: %s\n", fileName);
             //printf("Dire: %s + Size: %d\n", fileName, Diresize); 
             char* gotName = "Got Name";
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
@@ -2283,6 +2306,8 @@ char* readInFile(char* fileName)
         return buffer; 
     }
     printf("Cannot open the file");
+    char*dne = "DNE\0";
+    return dne;
 }
 
 int getFiles(int sockfd, char* fileName)
@@ -2436,6 +2461,7 @@ bool canCommit(char*projectName){
             }
         }
      }
+    
     return true;
     
 }
