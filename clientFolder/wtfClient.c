@@ -1813,6 +1813,16 @@ void push(char*projectName,int socket)
        
         send(socket,commitBuffer ,length, 0); //sends the commit buffer using the size of it stores in size 
 
+      
+    char* DNE = malloc (sizeof(char) * 4);
+    recv(socket, DNE, 4, 0);
+
+    if (strcmp(DNE, "DNE") == 0)
+    {
+        printf("No matching commit file\n");
+        remove(commitFileName);
+        return;
+    }
 
     char* Check = malloc(5 * sizeof(char));
 

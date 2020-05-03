@@ -1322,8 +1322,11 @@ void push(int sock)
     {
         closedir(dir2);
         printf("Sent Commit file is not the same / does not exist on the server!\n");  //if we did not find a match origianlly, return
-        
+        send(sock, "DNE", 4, 0);
         return;
+    }
+    else{
+        send(sock, "OKK", 4, 0);
     }
   
 
