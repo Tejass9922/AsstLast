@@ -1072,6 +1072,7 @@ void update(char* projectName, int socket){
     
     i=0;
     buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
     while (clientBuffer[i]!='\n'){
         int len = strlen(buffer);
         buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
