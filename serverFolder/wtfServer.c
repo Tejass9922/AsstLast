@@ -1593,14 +1593,11 @@ void *server_handler (void *fd_pointer);
  void exitFunction()
 { 
     printf("Caught Exit!\n");
+    exit(0);
 }
 int main(int argc, char **argv)
 {
-  int  value = atexit(exitFunction); 
-    if (value != 0) { 
-      
-       printf("At exit failed nigga!\n");
-    } 
+ 
     int i = 0;
     while (i < 1000)
     {
@@ -1622,7 +1619,7 @@ int main(int argc, char **argv)
    }
 	puts("Socket Created");
   
-  
+   signal(SIGINT, exitFunction);
    bzero(&servaddr,sizeof (servaddr));
    servaddr.sin_family = AF_INET;
    servaddr.sin_addr.s_addr = INADDR_ANY;
