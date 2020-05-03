@@ -439,6 +439,7 @@ void commit(int socket){
             if (commitFD!=-1){
                  printf("*Overwriting Commit File**\n");
             }
+            close(commitFD);
              commitFD = open(commitPath,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);   
             printf("%s\n",commitPath);
             printf("%d\n",commitSize);
@@ -1262,7 +1263,7 @@ void push(int sock)
 
             
 
-     char* commitPath = malloc(NameSize); //mallocs size for filename 
+     char* commitPath = malloc(sizeof(char)*NameSize); //mallocs size for filename 
      
 
     
@@ -1306,7 +1307,9 @@ void push(int sock)
     bool same = false;
     while ((dp = readdir(dir)) != NULL)
     {
-         char*commmitExtraction = &commitPath[strlen(projectName)+1];
+        char*commmitExtraction = &commitPath[strlen(projectName)+1];
+       
+       //   printf("dp name %s\n",dp->d_name);
         if (strcmp(dp->d_name, ".") != 0 && strcmp(dp->d_name, "..") != 0 && strcmp(dp->d_name, commmitExtraction) == 0)
         {
             printf("Found a match between Commits!, starting to push!\n");   //loops through directory until we find a mathch between what was sent and what we have (.Commit files)
@@ -1315,7 +1318,7 @@ void push(int sock)
         }
     }
 
-   remove(commitPath);
+   
     closedir(dir);
        DIR *dir2 = opendir(projectName); //open the directory once more to delete any other potential .Commit files
     if (!same)
@@ -1357,7 +1360,7 @@ void push(int sock)
                }
             }
         }
-
+      remove(commitPath);
     //create a path to a new directory called Oldversions
         char olderVersionsPath[strlen(projectName)+15];
        
@@ -1544,7 +1547,7 @@ void push(int sock)
     write(historyFile,&nL,1);
 
     close(historyFile);
-
+  
  
  return;
 }

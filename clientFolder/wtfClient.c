@@ -1748,17 +1748,17 @@ void push(char*projectName,int socket)
 
         char temp[8];
 
-        int Namelength = strlen(commitFileName); //gets length of file name 
+        int Namelength = strlen(commitFileName) + 1; //gets length of file name 
         char NameSize[10];
         sprintf(NameSize,"%d",Namelength); //converts int to char*
 
-        send(socket, NameSize ,strlen(NameSize), 0); //sends size of commit file name
+        send(socket, NameSize , strlen(NameSize) + 1, 0); //sends size of commit file name
 
         recv(socket,temp,8,0); //recieved confirmation server got commit file name size
    
 
     
-    send(socket,commitFileName,strlen(commitFileName),0);//sends commit file name
+    send(socket,commitFileName, Namelength,0);//sends commit file name
 
     char* confirmation = malloc (sizeof(char) * 12);
     recv(socket, confirmation, 12 ,0); //gets confirmation it got the commit file name
