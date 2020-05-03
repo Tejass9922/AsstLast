@@ -964,6 +964,7 @@ void update(char* projectName, int socket){
 
    int i=0;
     char*buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
     while (serverManifest[i]!='\n'){
         int len = strlen(buffer);
         buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
@@ -984,6 +985,7 @@ void update(char* projectName, int socket){
     char*filePath;
     char*hash;
     buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
     int SNodeLength = 0;
     while (i<strlen(serverManifest))
     {
@@ -995,6 +997,7 @@ void update(char* projectName, int socket){
                  version = atoi(buffer);
                  //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
@@ -1005,6 +1008,7 @@ void update(char* projectName, int socket){
                //mem move gets ride of extra space at the beginning 
                //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
                count++;
             }
             else if (count==2)
@@ -1014,6 +1018,7 @@ void update(char* projectName, int socket){
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
+                 buffer[0] = '\0';
                count++;
             }
             //printf("Count: %d\n", count);
@@ -1029,6 +1034,8 @@ void update(char* projectName, int socket){
             SNodeLength++;
             count = 0;
             i++;
+              buffer = malloc(sizeof(char) *1);
+               buffer[0] = '\0';
         }
         else
         {
@@ -1036,7 +1043,6 @@ void update(char* projectName, int socket){
             buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
             buffer[len] = serverManifest[i];
             buffer[len+1] = '\0'; 
-            
             i++;
         }
         
@@ -1084,7 +1090,7 @@ void update(char* projectName, int socket){
     //char*hash;
     int cNodeLength = 0;
     buffer = (char*)malloc(sizeof(char)*1);
-
+    buffer[0] = '\0';
     while (i<strlen(clientBuffer))
     {
         //printf("Char Check: %c\n", serverManifest[i]);
@@ -1095,6 +1101,7 @@ void update(char* projectName, int socket){
                  version = atoi(buffer);
                  //printf("version check: %d\n", version);
                  buffer = malloc(sizeof(char) *1);
+                  buffer[0] = '\0';
                  count++;
             }
             else if (count==1)
@@ -1105,6 +1112,7 @@ void update(char* projectName, int socket){
                //mem move gets ride of extra space at the beginning 
                //printf("FilePath: %s\n", filePath);
                buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
                count++;
             }
             else if (count==2)
@@ -1114,6 +1122,7 @@ void update(char* projectName, int socket){
                memmove(hash, hash+1, strlen(hash));
                //printf("hash: %s\n", hash);
                buffer = malloc(sizeof(char) *1);
+                buffer[0] = '\0';
                count++;
             }
             //printf("Count: %d\n", count);
@@ -1128,7 +1137,8 @@ void update(char* projectName, int socket){
             insertFileNode(&cHead, tempNode);
             cNodeLength++;
             count = 0;
-           
+             buffer = (char*)malloc(sizeof(char)*1);
+             buffer[0] = '\0';
         }
         else
         {
@@ -1200,6 +1210,7 @@ void commit(char* projectName, int socket){
 
    int i=0;
     char*buffer = (char*)malloc(sizeof(char)*1);
+    buffer[0] = '\0';
     while (serverManifest[i]!='\n'){
         int len = strlen(buffer);
         buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));

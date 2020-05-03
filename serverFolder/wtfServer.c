@@ -570,7 +570,7 @@ void destroyProject(int sock)
 void createProject(int sock){
     char*projectName = (char*)(malloc(sizeof(char)*100));
     read(sock, projectName, 100);
-    printf("recieved project name: %s",projectName);
+    printf("recieved project name: %s\n",projectName);
     char*filePath = (char*)(malloc(sizeof(char)*100));
     DIR *dr = opendir(projectName); 
     if (dr == NULL)  
