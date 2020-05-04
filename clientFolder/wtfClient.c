@@ -361,11 +361,13 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
     
      //printf("commitFd: %d\n",commitFD);
         if ((sheadTemp==NULL) &&(cheadTemp==NULL)){
-            printf("perfect case, No commits to be made!");
+            printf("perfect case, No commits to be made!\n");
+            remove(commitFileName);
+      
         }
         else if ((sheadTemp==NULL) &&(cheadTemp!=NULL)){
             while (cheadTemp!=NULL){
-                printf("reached!*!\n");
+              
                printf("%s\n",cheadTemp->filePath);
                 writeCommit(commitFD,cheadTemp->version,cheadTemp->filePath,cheadTemp->hash,'A');
                 cheadTemp = cheadTemp->next;
@@ -373,7 +375,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         }
         else if ((sheadTemp!=NULL) &&(cheadTemp==NULL))
         {
-            printf("reached!*!\n");
+           
            while (sheadTemp!=NULL){
              printf("D %d %s %s\n",sheadTemp->version,sheadTemp->filePath,sheadTemp->hash);
             writeCommit(commitFD,sheadTemp->version,sheadTemp->filePath,sheadTemp->hash,'D');
@@ -521,7 +523,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
    
   // close(fd);
        
-        printf("reached\n");
+     
       
 
      
@@ -1649,7 +1651,7 @@ void upgrade(char* projectName, int socket)
                 recv(socket, fileBuffer, size+1, 0); //gets file buffer
                 send(socket, "Confirm", 8, 0); //sends confirmation it got the file buffer 
 
-                printf("fileBuffer: %s\n", fileBuffer);
+              
                 int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);
                 writeNewFiles(fd,fileBuffer,false);
                 close(fd);
@@ -1688,8 +1690,7 @@ void upgrade(char* projectName, int socket)
         // address into ASCII string 
         IPbuffer = inet_ntoa(*((struct in_addr*) host_entry->h_addr_list[0])); 
     
-        printf("Hostname: %s\n", hostbuffer); 
-        printf("Host IP: %s\n", IPbuffer);
+       
 
         char commitFileNameDelete[strlen(IPbuffer)+3+strlen(projectName)+7];
         strcpy(commitFileNameDelete,projectName);
@@ -1859,7 +1860,7 @@ void push(char*projectName,int socket)
                 reply = malloc(sizeof(char) * 8);
                 recv(socket, reply, 8, 0); //gets confirmation
 
-                printf("fileBuffer: %s\n", fileBuffer);
+              
             }
             else{
                 send(socket, "NO", 3, 0); //sends size of file buffer 
@@ -1952,7 +1953,7 @@ void add(char*projectName, char*fileName)
             char* buffer = readInFile(path);
 
             char* test  = (char*)(malloc(sizeof(char)*41));
-            printf("reached1\n"); 
+          
             test = computeHash(path);
            
             //sprintf(hexHash,"%x",hash);
@@ -2194,7 +2195,7 @@ void checkout(char* projectName, int socket){
             recv(socket, isNotEmpty, 11, 0);
             send(socket, "OKK", 4, 0);
             int fd = open(fileName,O_RDWR|O_CREAT|O_APPEND,0777);
-            printf("FD: %d",fd);
+          
             if (strcmp(isNotEmpty, "FF") == 0)
             {
 
@@ -2205,7 +2206,6 @@ void checkout(char* projectName, int socket){
                 char* fileBuffer = (char*) malloc(sizeof(char) * Filesize); //allocates mem for the file buffer 
                 recv(socket, fileBuffer, Filesize, 0); //gets the file buffer
                 send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file pat
-                printf("Buffer: %s\n", fileBuffer);
                 write(fd,fileBuffer,strlen(fileBuffer));
             }
             else
@@ -2224,7 +2224,6 @@ void checkout(char* projectName, int socket){
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the size of the file name 
             char* fileName = (char*) malloc(sizeof(char) * Diresize); //allocates mem for the file path 
             recv(socket, fileName, Diresize, 0); //gets the file path
-            printf("PATH: %s\n", fileName);
             //printf("Dire: %s + Size: %d\n", fileName, Diresize); 
             char* gotName = "Got Name";
             send(socket,"Got Size", 8 ,0); //sends confirmation that it got the file path
@@ -2234,6 +2233,8 @@ void checkout(char* projectName, int socket){
         recv(socket, getPrompt, 5, 0);
     }
    closedir(dr);
+
+   printf("SUCCESS!\n");
 
 }
 
@@ -2327,7 +2328,7 @@ char* readInFile(char* fileName)
             close(fd);
         return buffer; 
     }
-    printf("Cannot open the file");
+    printf("Cannot open the file / File was deleted\n");
     char*dne = "DNE\0";
     return dne;
 }

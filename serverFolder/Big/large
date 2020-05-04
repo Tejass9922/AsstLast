@@ -1,0 +1,55 @@
+files in 
+
+it:
+A readme.pdf file documenting your design paying particular attention to the thread synchronization requirements of your application.
+A file called testcases.txt that contains a thorough set of test cases for your code, including inputs and expected outputs.
+All source code including both implementation (.c) and interface(.h) files.
+(and no executables or object files)
+A test plan documented in testplan.txt and code to run the test cases you specify
+A Makefile for producing your object and executable files with at least the following targets:
+all - should build a client executable named “WTF” and server executable named “WTFserver”
+o clean - should remove all executables and object files buildable by the Makefile
+o test - should build all files needed to run your test cases, and an executable named
+“WTFtest” to run them.
+Yo the above using zlib or tar library calls (rather than system()) +10pts
+
+files in 
+
+it:
+A readme.pdf file documenting your design paying particular attention to the thread synchronization requirements of your application.
+A file called testcases.txt that contains a thorough set of test cases for your code, including inputs and expected outputs.
+All source code including both implementation (.c) and interface(.h) files.
+(and no executables or object files)
+A test plan documented in testplan.txt and code to run the test cases you specify
+A Makefile for producing your object and executable files with at least the following targets:
+all - should build a client executable named “WTF” and server executable named “WTFserver”
+o clean - should remove all executables and object files buildable by the Makefile
+o test - should build all files needed to run your test cases, and an executable named
+“WTFtest” to run them.
+Yo the above using zlib or tar library calls (rather than system()) +10ptsfiles in 
+
+it:
+A readme.pdf file documenting your design paying particular attention to the thread synchronization requirements of your application.
+A file called testcases.txt that contains a thorough set of test cases for your code, including inputs and expected outputs.
+All source code including both implementation (.c) and interface(.h) files.
+(and no executables or object files)
+A test plan documented in testplan.txt and code to run the test cases you specify
+A Makefile for producing your object and executable files with at least the following targets:
+all - should build a client executable named “WTF” and server executable named “WTFserver”
+o clean - should remove all executables and object files buildable by the Makefile
+o test - should build all files needed to run your test cases, and an executable named
+“WTFtest” to run them.
+Yo the above using zlib or tar library calls (rather than system()) +10ptsfiles in 
+
+it:
+A readme.pdf file documenting your design paying particular attention to the thread synchronization requirements of your application.
+A file called testcases.txt that contains a thorough set of test cases for your code, including inputs and expected outputs.
+All source code including both implementation (.c) and interface(.h) files.
+(and no executables or object files)
+A test plan documented in testplan.txt and code to run the test cases you specify
+A Makefile for producing your object and executable files with at least the following targets:
+all - should build a client executable named “WTF” and server executable named “WTFserver”
+o clean - should remove all executables and object files buildable by the Makefile
+o test - should build all files needed to run your test cases, and an executable named
+“WTFtest” to run them.
+Yo the above using zlib or tar library calls (rather than system()) +10pts

@@ -1051,7 +1051,7 @@ void upgrade(int sock)
                 reply = malloc(sizeof(char) * 8);
                 recv(sock, reply, 8, 0); //gets confirmation
 
-                printf("fileBuffer: %s\n", fileBuffer);
+             
             }
             else{
                 send(sock, "NO", 3, 0); //sends size of file buffer 
@@ -1510,7 +1510,7 @@ void push(int sock)
                 recv(sock, fileBuffer, size+1, 0); //gets file buffer
                 send(sock, "Confirm", 8, 0); //sends confirmation it got the file buffer 
 
-                printf("fileBuffer: %s\n", fileBuffer);
+               
                 int fd = open(cHead2->filePath,O_RDWR|O_CREAT|O_TRUNC,0777);
                 writeNewFiles(fd,fileBuffer,false);
                 close(fd);
@@ -1923,6 +1923,7 @@ void *server_handler (void *fd_pointer)
         if(!dp){
             char* replyName = "DNE";
             send(sock, replyName, strlen(replyName) + 1, 0); //if project DNE exists it tells the client
+            printf("project does not exist on server!\n");
             return;
         }
         else{
@@ -1939,7 +1940,7 @@ void *server_handler (void *fd_pointer)
             }
             pthread_mutex_unlock(&headMutex); //unlocks head nodes for projects
 
-            printf("Lock: %d\n", pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
+            printf("Position: %d, Lock: %d\n", mutexPosition, pthread_mutex_lock(&projectMutexes[mutexPosition])); //locks the specified lock (using mutexPosition)
             printf("position: %d\n", mutexPosition);
             checkout(sock); 
             printf("Unlock: %d\n", pthread_mutex_unlock(&projectMutexes[mutexPosition])); //unlocks the specified lock (using mutexPosition)
