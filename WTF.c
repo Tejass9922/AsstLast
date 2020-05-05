@@ -99,7 +99,8 @@ void deleteNode(File **head_ref, char* key)
     if (temp != NULL &&(strcmp(key,temp->filePath)==0)) 
     { 
         *head_ref = temp->next;   // Changed head 
-        free(temp);               // free old head 
+        free(temp);   // free old head 
+         printf("Successfully Removed File!\n");            
         return; 
     } 
   
@@ -116,6 +117,8 @@ void deleteNode(File **head_ref, char* key)
         printf("Specified File does not Exist!\n");
     return; 
     }
+    printf("Successfully Removed File!\n");
+    
   
     // Unlink the node from linked list 
     prev->next = temp->next; 
@@ -490,7 +493,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
         int Namelength = strlen(commitFileName); //gets length of file name 
         char NameSize[10];
         sprintf(NameSize,"%d",Namelength); //converts int to char*
-        printf("client Size: %d\n", Namelength);
+        //printf("client Size: %d\n", Namelength);
         send(socket, NameSize ,strlen(NameSize), 0); //sends size of file name
 
         recv(socket,temp,8,0); //recieved confirmation
@@ -741,7 +744,9 @@ void history(char * projectName, int socket)
 
     printf("History: \n%s\n", historyBuffer);
 
-  
+    printf("Successfully got History!\n");
+
+
 
 }
 
@@ -764,6 +769,8 @@ void currentVersion(char* projectName, int socket)
     recv(socket, manifestVersion ,size,0); //gets buffer containing the file
 
     printf("Current Version: \n%s\n", manifestVersion);
+
+    printf("Successfully got Current Version!\n");
 }
 
 File* tokenizeClientManifest(File*cHead,char*clientBuffer){
@@ -1180,7 +1187,7 @@ void update(char* projectName, int socket){
 
     updateFile(client, server, projectName,socket);
 
-    printf("SUCCESS!\n");
+    printf("Successfully Updated!\n");
 
     return;
    
@@ -1427,7 +1434,7 @@ void commit(char* projectName, int socket){
     
 
     commitFile(client, cNodeLength , server, SNodeLength , projectName,socket);
-    printf("SUCCESS!\n");
+    printf("Successfully Commited!\n");
     return;
    
 }
@@ -1445,6 +1452,16 @@ void rollback(char* projectName,int version, int socket){
    char versionBuff[20];
     sprintf(versionBuff,"%d",version);
     send(socket,versionBuff,strlen(versionBuff)+1,0);
+
+   char* rep = malloc(sizeof(char) * 5);
+   recv(socket, rep, 5, 0);
+   if (strcmp(rep, "SUCC") == 0)
+   {
+       printf("Succesfull Rollback to Version: %d\n",version);
+   }
+    else{
+        printf("Failed to Rollback!\n");
+    }
 
 }
 void writeManifest(int version,char*filePath, char*hash, int fd){
@@ -1700,7 +1717,7 @@ void upgrade(char* projectName, int socket)
         printf("%s\n",commitFileNameDelete);
         remove(commitFileNameDelete);
 
-        printf("SUCCESS!\n");
+        printf("Successfully Upgraded!\n");
   return;
 
 }
@@ -1781,7 +1798,7 @@ void push(char*projectName,int socket)
         
         CommitFile* commitHead = tokenizeCommit(commitBuffer);      //tokenizes commit Buffer
         int length = strlen(commitBuffer);
-        printf("%d\n",length);
+        //printf("%d\n",length);
         char size[10];
         sprintf(size,"%d",length);
              //converts the size into a char* to send over to the server
@@ -1856,14 +1873,10 @@ void push(char*projectName,int socket)
         cHead2 = cHead2->next;
     }
         
-    
-    
 
+    remove(commitFileName);
 
-   
-   
-  
-  remove(commitFileName);
+    printf("Successfully Pushed!\n");
    
 }
 void setTimeout(int milliseconds)
@@ -1964,7 +1977,7 @@ void add(char*projectName, char*fileName)
                      }
                 }
              }
-               printf("SUCCESS!\n");
+               printf("Successfully Added!\n");
         }
         else
         {
@@ -1992,7 +2005,8 @@ void removeFile(char*projectName,char*fileName)
             strcat(targetFilePath,"/");
             strcat(targetFilePath,fileName);
             int fd = open(manifest,O_RDWR);
-            if (fd!=-1){
+            if (fd!=-1)
+            {
                 
                 bool dne =true;
                 int projectVersion;
@@ -2050,7 +2064,7 @@ void removeFile(char*projectName,char*fileName)
                 }
 
                 close(newOpen);
-                printf("SUCCESS!\n");
+                
             }
             else
             {
@@ -2067,7 +2081,8 @@ void destroy(int socket, char* projectName)
     int len = strlen(projectName)+1;
     send(socket,projectName,len,0);
     recv(socket, returnMessage, 50, 0);
-    printf("%s\n", returnMessage);
+    printf("%s\n", returnMessage);  //Success / faulure message
+
 }
 
 void create(int socket, char* projectName){
@@ -2104,7 +2119,7 @@ void create(int socket, char* projectName){
 
    if (recieve > 0)
    {
-       printf("Got Contents: %s\n", fileContents);  
+      // printf("Got Contents: %s\n", fileContents);  
    }
    else
    {
@@ -2114,6 +2129,8 @@ void create(int socket, char* projectName){
    write(filedescriptor, fileContents, strlen(fileContents));
    
     close(filedescriptor);
+
+    printf("Successfully Created Project!\n");
    
 }
 
@@ -2211,7 +2228,7 @@ void checkout(char* projectName, int socket){
     }
    closedir(dr);
 
-   printf("SUCCESS!\n");
+   printf("Successfully Checked Out!\n");
 
 }
 
@@ -2281,6 +2298,8 @@ if (validHost==0){
     char sp = ' ';
     write(fd,&sp,1);
     write(fd,port, strlen(port));
+
+    printf("Successfully Configured!\n");
 
 }
 
@@ -2724,7 +2743,7 @@ int main(int argc, char **argv)
             int socket = connectToServer();
             if (socket>0)
             {
-            char command[15] = "currentVersion";
+            char command[15] = "currentversion";
             send(socket,command,15,0);
             char* reply = malloc(50* sizeof(char));
             recv(socket,reply,50,0);

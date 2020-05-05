@@ -395,7 +395,7 @@ void commit(int socket){
          //   printf("Server Buffer: %s\n", buffer);
             int length = strlen(buffer);
             char size[10];
-            printf("length: %d\n", length); //manifest 
+            //printf("length: %d\n", length); //manifest 
             sprintf(size,"%d",length);
             send(socket,size,10,0);
             char temp[8];
@@ -448,8 +448,8 @@ void commit(int socket){
             }
             close(commitFD);
              commitFD = open(commitPath,O_RDWR|O_APPEND|O_CREAT|O_TRUNC,0777);   
-            printf("%s\n",commitPath);
-            printf("%d\n",commitSize);
+            //printf("%s\n",commitPath);
+            //printf("%d\n",commitSize);
             write(commitFD,clientCommitFile,commitSize);
 
             close(commitFD);
@@ -1152,6 +1152,7 @@ void rollback(int sock){
     
     struct dirent *de, *dx;
     
+    
 
     bool matchFound = false;
      DIR* da = opendir(olderVersionsPath);
@@ -1159,6 +1160,7 @@ void rollback(int sock){
     if (da == NULL)  
     { 
         printf("OlderVersins of this project does not Exist!\n" ); 
+        send(sock, "FAIL", 5, 0);
         return;
         
     } 
@@ -1182,6 +1184,8 @@ void rollback(int sock){
 
  if (!matchFound){
         printf("Version number does not exist!\n");
+        send(sock, "FAIL", 5, 0);
+       
     }
 else{
     DIR* dr = opendir(olderVersionsPath);
@@ -1235,6 +1239,7 @@ else{
     }
   
     closedir(dr);
+    send(sock, "SUCC", 5, 0);
 }
     return;
 
@@ -1618,7 +1623,7 @@ void Exit_handler (int signum)
                 ptr = ptr->next;
                 free(old);
         }
-        printf("Server closed.\n");
+        printf("\nServer closed.\n");
      exit(0);
 }
 int main(int argc, char **argv)
