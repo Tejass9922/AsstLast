@@ -1096,7 +1096,7 @@ int testExt(char*path,int version){
 
      char*buffer = malloc(sizeof(char)*1);
     buffer[0]= '\0';
-    int i = strlen(path)-1;
+    int i = strlen(path)-5;
    
     while (i>=0)
     {
@@ -1213,6 +1213,25 @@ else{
              strcat(removeX,projectName);
              system(removeX);
 
+            //unTar
+            char unTar[500];
+            strcpy(unTar,"tar -xvf ");
+            strcat(unTar,path);
+            system(unTar);
+
+            //removeTar
+            char removeTar[500];
+            strcpy(removeTar,"rm -rf ");
+            strcat(removeTar,path);
+            system(removeTar);
+           
+           
+            // system("tar -xvf OlderversionsTest/projectA/projectA_0.tar");
+            //  system("rm -rf OlderversionsTest/projectA/projectA_0.tar");
+           
+            //changing tar path to regular path to that we can copy it over to our regular folder
+            int len = strlen(path);
+            path[len-4] = '\0';
              char copy[300];
             strcpy(copy,"cp -r ");
             strcat(copy,path);
@@ -1397,17 +1416,24 @@ void push(int sock)
         char c;
         char*projVersion = (char*)(malloc(sizeof(char)*1));
         projVersion[0] = '\0';
-    while (c!='\n'){
-       read(fd,&c,1);
+        int status2;
+        
+   do {
+       
+      
+          read(fd,&c,1);
+           if (c=='\n'){
+           break;
+       }
        int len = strlen(projVersion);
        projVersion = (char*)realloc(projVersion,(len+ 2)*sizeof(char));
        projVersion[len] = c;
        projVersion[len+1] = '\0';    
-    }
+    }while(c!='\n');
         close(fd);
 
     
-        char oldProjectsPath[14+(2*(strlen(projectName)))+strlen(projVersion)+4];
+        char oldProjectsPath[15+(2*(strlen(projectName)))+strlen(projVersion)+4];
         strcpy(oldProjectsPath,olderVersionsPath);
         strcat(oldProjectsPath,"/");
         strcat(oldProjectsPath,projectName);
@@ -1421,7 +1447,7 @@ void push(int sock)
 
        
 
-       int check2 = mkdir(olderVersionsPath,0777);
+       int check2 = mkdir(olderVersionsPath,0777);  
       
         char copy[200];
        strcpy(copy,"cp -R ");
@@ -1430,7 +1456,22 @@ void push(int sock)
       strcat(copy,oldProjectsPath);
      // printf("%s\n",copy);
         system(copy);
-
+         char tar[500];
+        char newOldP[strlen(oldProjectsPath)+1];
+        strcpy(newOldP,oldProjectsPath);
+         strcpy(tar,"tar -cvf - ");
+        strcat(tar,newOldP); 
+        strcat(tar,"/ > ");
+       strcat(tar,newOldP);
+       strcat(tar,".tar");
+     
+      // system("tar -cvf - olderVersions/Big/Big_0 > olderVersions/Big/Big_0.tar");
+       system(tar);
+       char removeNonTar[100];
+       strcpy(removeNonTar,"rm -rf ");
+       strcat(removeNonTar,oldProjectsPath);
+       system(removeNonTar);
+       
         closedir(dir2);
         closedir(dir3); 
          char  path[strlen(projectName)+11];

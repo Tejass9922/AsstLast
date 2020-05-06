@@ -550,6 +550,7 @@ void commitFile(Manifest client, int cNodeLength ,Manifest server, int sNodeLeng
 }
 void updateFile(Manifest client, Manifest server, char* projectName,int socket)
 {
+      bool conflictCheck = false;
              char* conflictPath = malloc((strlen(projectName) + 11) * sizeof(char));
             strcpy(conflictPath, projectName);
             char conflictExt[11] = "/.Conflict";
@@ -610,7 +611,7 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
         int addCheck = 0;
         int count1 = 0;
         bool checkTest = false;
-        int conflictCheck = 0;
+     
         //printf("%d\t%d\n",cNodeLength,sNodeLength);
         while(cheadTemp != NULL)//iterates thrr client nodes 
         {
@@ -623,21 +624,25 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
                 if (strcmp(cheadTemp->filePath, sheadTemp->filePath) == 0)//compares client file name server file name
                 {   
                     
-                  if ((strcmp(cheadTemp->hash, sheadTemp->hash) != 0)&&(cheadTemp->version!=sheadTemp->version)) //check to see if stored hash is the same but file version is different
+                  if ((strcmp(cheadTemp->hash, sheadTemp->hash) != 0)) //check to see if stored hash is the same but file version is different
                   {
                         char* liveHash = malloc(sizeof(char) * 41);
                         liveHash = computeHash(cheadTemp->filePath);
                         if (strcmp(cheadTemp->hash,liveHash)==0){ //check to see if live hash of client file is different than stored hash
-                         //modify code
-                          printf("M %d %s %s\n",sheadTemp->version,sheadTemp->filePath,sheadTemp->hash); //if live hash of client file is different than stored hash adds a modify line 
-                         
-                          writeUpdate(updateFD,sheadTemp->version,sheadTemp->filePath,sheadTemp->hash,'M');
-                         //write Update file
+
+                            if ((cheadTemp->version!=sheadTemp->version)){
+                                //modify code
+                                printf("M %d %s %s\n",sheadTemp->version,sheadTemp->filePath,sheadTemp->hash); //if live hash of client file is different than stored hash adds a modify line 
+                                
+                                writeUpdate(updateFD,sheadTemp->version,sheadTemp->filePath,sheadTemp->hash,'M');
+                                //write Update file
+                            }
                         }
                         else
                         {
                             int conflictFD = open(conflictPath,O_RDWR|O_CREAT|O_APPEND, 0777);
                               remove(updateFileName);
+                              conflictCheck=true;
                               printf("C %s\t%s \n",cheadTemp->filePath,liveHash); //if live hash of client file is different than stored hash adds a modify line 
 
                               writeConflict(conflictFD,cheadTemp->filePath,liveHash,'C');
@@ -713,8 +718,10 @@ void updateFile(Manifest client, Manifest server, char* projectName,int socket)
        
         send(socket,updateBuffer ,updateSize, 0); //sends the commit buffer using the size of it stores in size */
         
-
-        
+    if (!conflictCheck)
+          printf("Successfully Updated!\n");
+    else
+        printf("There is a Conflict! Make sure to resolve it and try to Update again!\n");
     
         
 }
@@ -1187,7 +1194,7 @@ void update(char* projectName, int socket){
 
     updateFile(client, server, projectName,socket);
 
-    printf("Successfully Updated!\n");
+  
 
     return;
    
@@ -1876,6 +1883,46 @@ void push(char*projectName,int socket)
 
     remove(commitFileName);
 
+    //Changing manifest version
+    
+  /*  char manifestFileName[strlen(projectName)+11];
+    strcpy(manifestFileName,projectName);
+    char manifestExt[11] = "/.Manifest";
+    strcat(manifestFileName,manifestExt);
+    char*manifestBuffer = readInFile(manifestFileName);
+
+    int i=0;
+   char* buffer = (char*)malloc(sizeof(char)*1);
+   buffer[0] = '\0';
+    while (manifestBuffer[i]!='\n'){
+        int len = strlen(buffer);
+        buffer = (char*)realloc(buffer,(len+ 2)*sizeof(char));
+        buffer[len] = manifestBuffer[i];
+        buffer[len+1] = '\0';
+        i++;
+    }
+    i++;
+    int projVersion = atoi(buffer);
+    projVersion++;
+    char versionBuff2[20];
+    sprintf(versionBuff2,"%d",projVersion);
+    
+    File* mHead = NULL;
+    mHead =  tokenizeManifest(mHead,manifestBuffer);
+    
+    int manFD = open(manifestFileName,O_RDWR,O_TRUNC);
+
+    write(manFD,versionBuff2,strlen(versionBuff2));
+    char nL = '\n';
+    write(manFD,&nL,1);
+
+    
+    while (mHead!=NULL){
+       writeManifest(mHead->version,mHead->filePath,mHead->hash,manFD);
+        mHead = mHead->next;
+    }
+    close(manFD);
+    */
     printf("Successfully Pushed!\n");
    
 }
