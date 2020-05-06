@@ -1,0 +1,147 @@
+In this file, we will describe the functionality of each command as well as all the error cases and success cases of each command in our project.
+
+Server
+To test the multithreading capability of our code we started the server, then would start up multiple clients to make sure the server can handle request from different clients at the same time. To make sure locks were working we started client that interacted with the same project and ran different commands with them. The compared the results of each client to make sure that no data was distorted and that proper outcome was achieved. 
+Ex. ./WTFServer 9009
+	Starts up a server and wait for a client to connect on port number 9009
+
+Client 
+When trying to establish a connection with the server, the client reattempts a connection every 3 seconds. It gets the IP address (or hostname) and the port number from the configure file. 
+
+Configure
+Test Cases:
+Invalid IP/Invalid Hostname: stops and returns an error message because stating invalid IP/Hostname, does not create a configure
+Successful Configure: Creates a .configure file and reports a success message
+Ex. ./WTF Configure Project1 file1.txt
+
+Create
+Test Cases:
+Project exists on server: stops and returns a message to the user stating the project already exists on the server 
+Successful Create: Using the project name sent by the client, the server will initialize a project folder and a manifest for that project. It will then send the manifest to the client and the client will save that manifest in its local copy of the newly created project. (and reports a success message)
+Ex. ./WTF create Project1
+
+Add
+Test Cases:
+Non Existent file on client: stops and return a message to the user stating the file does not exists 
+File already exists on manifest: stops and returns a messages to the user stating the file already exists on the manifest 
+Successful Add: add a lines to the manifest representing the file and all of its properties (and reports a success message)
+Ex. ./WTF Add Project1 file1.txt
+
+Destroy
+Test Cases:
+Project does not exists on server: returns a message to the user stating the project does not exists on the server
+Project exists on server: successfully deletes the project (and reports a success message)
+Ex. ./WTF Destroy Project1 
+
+Remove
+Test Cases:
+Non Existent file on manifest: stops and returns a message to the user stating the file does not exists on the manifest
+Successful remove: removes a line from the manifest representing the file and all of its properties (and reports a success message)
+Ex. ./WTF remove Project1 file1.txt
+
+Checkout 
+Test Cases:
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+Project already exists on client: stops and returns a message to the user stating project already exists on the client
+Successful Checkout: creates the most up to date version of all files and subdirectories for the given project name on the client side (and reports a success message)
+Ex. ./WTF checkout Project1
+
+History
+Test Cases:
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+Successful History: sends a message to the client containing all of the updates made by successful pushes (and reports a success message)
+Ex. ./WTF History Project1
+
+
+Current Version
+Test Cases:
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+Successful History: sends a message to the client containing information for all the files in that project Version (and reports a success message)
+Ex. ./WTF currentversion Project1
+
+
+Rollback
+Test Cases:
+Project does not exists on server or it is given an invalid project version: stops and returns a message to the user stating the project does not exists on the server
+Successful Rollback: Replaces the current version of the project with the requested older version. Deletes all project version in between the requested version and the current version (and reports a success message)
+Ex. ./WTF rollback Project1 0
+
+
+Commit
+Test Cases: 
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+First Check: Checks to see if the project versions are the same, if they are the commands stops and tells the user no changes need to be made. Otherwise, it will continue to the next vheck
+Criteria
+	Modify: the server and client .Manifest have the same file, and:  (the hash stored in both the server and client .Manifest is the same)  + (the client's live hash of the file is different than its stored hash)
+	Writes out 'M <file/path> <client’s hash>'  to the commit
+	Add: the server .Manifest does not have the file, the client .Manifest does 
+	Writes out 'A <file/path> <live hash>'  to the commit file 
+	Delete: the server .Manifest does have the file, but the client .Manifest does not 
+	Writes out  'D <file/path> <server hash>  to STDOUT 
+The client sends a copy of its .commit file with its IP address contacted to the end of it. 
+If commit goes through it reports a success message
+Ex. ./WTF commit Project1
+
+
+
+Push
+Test Cases: 
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+First Check: Checks to see of there is a .commit file for the client that runs the push command
+If a .commit file exists for the client, it deletes all other pending commits 
+Valid Commit File: Saves the current version of the project in an older versions folder, applies all changes listed in the .commit file, returns a success message
+	deletes all files tagged with D
+	adds all files tagged with A
+	modifies all files tagged with M
+If Push goes through it reports a success message
+Ex. ./WTF push Project1
+
+Update
+Test Cases: 
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+First Check: Checks to see if the project versions are the same, if they are the commands stops and tells the user no changes need to be made. Otherwise, it will continue to the next vheck
+Update File Criteria
+	Full Success:
+	Manifest versions are the same and it returns a message to the user stating no updates need to be made
+	Partial Succes:
+	Modify: the server and client .Manifest are different versions, and the client's .Manifest: has files whose version and stored hash are different than the server's, 
+	Writes out 'M <file/path> <client’s hash>'  to the commit
+	Add: the client's .Manifest does not have the file, the server .Manifest does 
+	Writes out 'A <file/path> <live hash>'  to the commit file 
+	Delete: the client’s .Manifest does have the file, but the client .Manifest does not 
+	Writes out  'D <file/path> <server hash>  to STDOUT 	
+Conflict File Criteria
+	Manifest Versions are different, client has a line in its manifest who’s live hash and stored hash is different than what the sever has
+	Begins writing 'C <file/path> <live hash>'  to .conflict file 
+	Deletes any .update file that may have been created
+Client saves either an update file or a conflict file (if there is a conflict case)
+If Update goes through it reports a success message
+Ex. ./WTF update Project1
+
+
+
+Upgrade
+Test Cases: 
+Project does not exists on server: stops and returns a message to the user stating the project does not exists on the server
+First Check: Checks to see of there is a .conflict file for the client that runs the push command, if there is it returns and tells the user to fix any issues 
+Second Check: checks to see if there is a 
+Valid Update File: Saves the current version of the project in an older versions folder, applies all changes listed in the .update file, returns a success message
+	deletes all files tagged with D
+	adds all files tagged with A
+	modifies all files tagged with M
+If Upgrade goes through it reports a success message
+Ex. ./WTF upgrade Project1
+
+
+
+
+
+
+
+
+
+
+
+
+
+

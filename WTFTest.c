@@ -106,13 +106,15 @@ int main(int argc, char **argv)
 
         system("cd clientTest && ./WTF remove testRoll file2.txt"); //removes file2.txt from testRoll's manifest
 
-
+  
         kill(pid,SIGINT); //sends signal to end process and kill threads, will output a message for each thread 
     }
-    else if (pid!=-1)
+    else 
     {
             system("cd serverTest && gcc -g -o WTFServer -pthread WTFServer.c");//compiles server
             system("cd serverTest && ./WTFServer 9020"); //starts up server
+           
+          
              
     }
 

@@ -1,0 +1,22 @@
+This file will describe a list of different commands used to test WTF and WTFServer.  
+It will be based off the WTFTest.c file, which runs a set of test cases showing the functionality of this project. First We fork the process to get the pid of the server. 
+
+Next we create 2 directories,(clientTest) and (serverTest), to (make copies of and then store) our client and server C files. Next we compile and run both server and client executables(based on whether the pid is 0 or not)
+
+After this, we run through a series of client commands to the server. The comments inside the source file of WTFTest.c detail each test to a high degree but to put it simply, we test all the functions and output success or failure messages to the client for either success/error cases.
+
+For the entirety of the test, the user is able to see the outputs of the client AND the server.
+
+Overall, there are a total of 31 commands that go over the functionality of all 13 functions programmed. In those 31 commands there are error cases and success cases.
+
+After finishing running the commands for the test, we call a kill command that sends a SIGINT signal to the server. Upon receiving this, the server calls our "Exit_handler" function and terminates all 17 threads in the test execution and sends a "server closed" message.
+
+
+User Notes:
+
+	- call "make clean" before calling "make test", otherwise the program will prompt 	the user to do so.
+
+	- make clean will remove the executables as well as clientTest and serverTest in 	order to prepare for another "make test" command
+
+	- to run the Test executable, call make test. There is no need to input anything 	else, the Makefile will automatically run the executable in addition to compiling 	WTFTest.c
+	
